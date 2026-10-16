@@ -1,0 +1,20 @@
+{
+  "name": "movie-matcher",
+  "version": "0.1.0",
+  "description": "Plataforma social privada de decisão em grupo para escolha de filmes",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.4",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.5"
+  }
+}
