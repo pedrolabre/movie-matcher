@@ -15,26 +15,37 @@ movie-matcher/
 ├── tsconfig.json
 ├── vitest.config.ts
 ├── src/
-│   └── core/
-│       └── domain/
-│           ├── entities/
-│           │   ├── Group.ts
-│           │   ├── GroupMember.ts
-│           │   ├── GroupMovieMatch.ts
-│           │   ├── GroupWatchSession.ts
-│           │   ├── Movie.ts
-│           │   ├── User.ts
-│           │   └── UserMoviePreference.ts
-│           ├── enums/
-│           │   ├── GroupRole.ts
-│           │   ├── MatchStatus.ts
-│           │   ├── PreferenceStatus.ts
-│           │   ├── QuorumLevel.ts
-│           │   └── QuorumRule.ts
-│           └── types/
-│               └── schemas.ts
+│   ├── core/
+│   │   └── domain/
+│   │       ├── entities/
+│   │       │   ├── Group.ts
+│   │       │   ├── GroupMember.ts
+│   │       │   ├── GroupMovieMatch.ts
+│   │       │   ├── GroupWatchSession.ts
+│   │       │   ├── Movie.ts
+│   │       │   ├── User.ts
+│   │       │   └── UserMoviePreference.ts
+│   │       ├── enums/
+│   │       │   ├── GroupRole.ts
+│   │       │   ├── MatchStatus.ts
+│   │       │   ├── PreferenceStatus.ts
+│   │       │   ├── QuorumLevel.ts
+│   │       │   └── QuorumRule.ts
+│   │       └── types/
+│   │           └── schemas.ts
+│   └── infrastructure/
+│       ├── cache/
+│       │   ├── CacheService.ts
+│       │   └── MemoryCacheService.ts
+│       └── tmdb/
+│           ├── mappers/
+│           │   └── MovieMapper.ts
+│           ├── TmdbClient.ts
+│           └── types.ts
 ├── tests/
 │   └── unit/
-│       └── domainSchemas.test.ts
+│       ├── domainSchemas.test.ts
+│       ├── MovieMapper.test.ts
+│       └── TmdbClient.test.ts
 └── README.md
 ```
