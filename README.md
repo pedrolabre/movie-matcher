@@ -53,6 +53,14 @@ movie-matcher/
 │           │   └── MovieMapper.ts
 │           ├── TmdbClient.ts
 │           └── types.ts
+│   └── mobile/
+│       ├── components/
+│       │   └── SwipeDeck/
+│       │       ├── MovieCard.tsx
+│       │       ├── SwipeDeck.tsx
+│       │       └── useSwipeGesture.ts
+│       └── stores/
+│           └── useDeckStore.ts
 ├── tests/
 │   ├── integration/
 │   │   ├── moviesRoutes.test.ts
@@ -62,6 +70,7 @@ movie-matcher/
 │       ├── domainSchemas.test.ts
 │       ├── MovieMapper.test.ts
 │       ├── PreferenceService.test.ts
-│       └── TmdbClient.test.ts
+│       ├── TmdbClient.test.ts
+│       └── useDeckStore.test.ts
 └── README.md
 ```
