@@ -121,3 +121,20 @@ export type CreateUserDto = z.infer<typeof createUserDtoSchema>;
 export type RecordPreferenceDto = z.infer<typeof recordPreferenceDtoSchema>;
 export type CreateGroupDto = z.infer<typeof createGroupDtoSchema>;
 export type ScheduleSessionDto = z.infer<typeof scheduleSessionDtoSchema>;
+
+export const moviePaginationQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+});
+
+export const movieSearchQuerySchema = z.object({
+  query: z.string().trim().min(1, 'Busca não pode ser vazia'),
+  page: z.coerce.number().int().min(1).default(1),
+});
+
+export const movieDetailsParamsSchema = z.object({
+  id: z.coerce.number().int().positive('ID do filme deve ser um número inteiro positivo'),
+});
+
+export type MoviePaginationQuery = z.infer<typeof moviePaginationQuerySchema>;
+export type MovieSearchQuery = z.infer<typeof movieSearchQuerySchema>;
+export type MovieDetailsParams = z.infer<typeof movieDetailsParamsSchema>;

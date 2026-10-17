@@ -42,6 +42,13 @@ const DEFAULT_GENRE_MAP: Record<number, string> = {
 };
 
 export class MovieMapper {
+  static getDefaultGenres(): readonly MovieGenre[] {
+    return Object.entries(DEFAULT_GENRE_MAP).map(([id, name]) => ({
+      id: Number.parseInt(id, 10),
+      name,
+    }));
+  }
+
   static resolveImageUrl(
     path?: string | null,
     size = DEFAULT_POSTER_SIZE,

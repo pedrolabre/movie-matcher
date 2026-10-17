@@ -15,24 +15,30 @@ movie-matcher/
 ├── tsconfig.json
 ├── vitest.config.ts
 ├── src/
+│   ├── api/
+│   │   ├── routes/
+│   │   │   └── movies.routes.ts
+│   │   └── server.ts
 │   ├── core/
-│   │   └── domain/
-│   │       ├── entities/
-│   │       │   ├── Group.ts
-│   │       │   ├── GroupMember.ts
-│   │       │   ├── GroupMovieMatch.ts
-│   │       │   ├── GroupWatchSession.ts
-│   │       │   ├── Movie.ts
-│   │       │   ├── User.ts
-│   │       │   └── UserMoviePreference.ts
-│   │       ├── enums/
-│   │       │   ├── GroupRole.ts
-│   │       │   ├── MatchStatus.ts
-│   │       │   ├── PreferenceStatus.ts
-│   │       │   ├── QuorumLevel.ts
-│   │       │   └── QuorumRule.ts
-│   │       └── types/
-│   │           └── schemas.ts
+│   │   ├── domain/
+│   │   │   ├── entities/
+│   │   │   │   ├── Group.ts
+│   │   │   │   ├── GroupMember.ts
+│   │   │   │   ├── GroupMovieMatch.ts
+│   │   │   │   ├── GroupWatchSession.ts
+│   │   │   │   ├── Movie.ts
+│   │   │   │   ├── User.ts
+│   │   │   │   └── UserMoviePreference.ts
+│   │   │   ├── enums/
+│   │   │   │   ├── GroupRole.ts
+│   │   │   │   ├── MatchStatus.ts
+│   │   │   │   ├── PreferenceStatus.ts
+│   │   │   │   ├── QuorumLevel.ts
+│   │   │   │   └── QuorumRule.ts
+│   │   │   └── types/
+│   │   │       └── schemas.ts
+│   │   └── services/
+│   │       └── CatalogService.ts
 │   └── infrastructure/
 │       ├── cache/
 │       │   ├── CacheService.ts
@@ -43,7 +49,10 @@ movie-matcher/
 │           ├── TmdbClient.ts
 │           └── types.ts
 ├── tests/
+│   ├── integration/
+│   │   └── moviesRoutes.test.ts
 │   └── unit/
+│       ├── CatalogService.test.ts
 │       ├── domainSchemas.test.ts
 │       ├── MovieMapper.test.ts
 │       └── TmdbClient.test.ts
