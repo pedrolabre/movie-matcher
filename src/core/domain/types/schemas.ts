@@ -138,3 +138,32 @@ export const movieDetailsParamsSchema = z.object({
 export type MoviePaginationQuery = z.infer<typeof moviePaginationQuerySchema>;
 export type MovieSearchQuery = z.infer<typeof movieSearchQuerySchema>;
 export type MovieDetailsParams = z.infer<typeof movieDetailsParamsSchema>;
+
+export const recordPreferenceBodySchema = z.object({
+  movieId: z.number().int().positive('ID do filme deve ser um número inteiro positivo'),
+  status: preferenceStatusSchema,
+  userId: z.string().uuid('ID do usuário deve ser um UUID válido').optional(),
+});
+
+export const getUserPreferencesQuerySchema = z.object({
+  status: preferenceStatusSchema.optional(),
+  userId: z.string().uuid('ID do usuário deve ser um UUID válido').optional(),
+  includeSkipped: z
+    .union([z.boolean(), z.enum(['true', 'false'])])
+    .optional()
+    .transform((val) => {
+      if (val === undefined) return undefined;
+      return val === true || val === 'true';
+    }),
+});
+
+export const groupSafePreferenceSchema = z.object({
+  userId: z.string().uuid(),
+  movieId: z.number().int().positive(),
+  status: z.literal(PreferenceStatus.WANT_TO_WATCH),
+  votedAt: z.coerce.date(),
+});
+
+export type RecordPreferenceBody = z.infer<typeof recordPreferenceBodySchema>;
+export type GetUserPreferencesQuery = z.infer<typeof getUserPreferencesQuerySchema>;
+export type GroupSafePreferenceDto = z.infer<typeof groupSafePreferenceSchema>;

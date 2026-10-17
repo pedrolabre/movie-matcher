@@ -17,7 +17,8 @@ movie-matcher/
 ├── src/
 │   ├── api/
 │   │   ├── routes/
-│   │   │   └── movies.routes.ts
+│   │   │   ├── movies.routes.ts
+│   │   │   └── preferences.routes.ts
 │   │   └── server.ts
 │   ├── core/
 │   │   ├── domain/
@@ -38,11 +39,15 @@ movie-matcher/
 │   │   │   └── types/
 │   │   │       └── schemas.ts
 │   │   └── services/
-│   │       └── CatalogService.ts
+│   │       ├── CatalogService.ts
+│   │       └── PreferenceService.ts
 │   └── infrastructure/
 │       ├── cache/
 │       │   ├── CacheService.ts
 │       │   └── MemoryCacheService.ts
+│       ├── database/
+│       │   └── repositories/
+│       │       └── PreferenceRepository.ts
 │       └── tmdb/
 │           ├── mappers/
 │           │   └── MovieMapper.ts
@@ -50,11 +55,13 @@ movie-matcher/
 │           └── types.ts
 ├── tests/
 │   ├── integration/
-│   │   └── moviesRoutes.test.ts
+│   │   ├── moviesRoutes.test.ts
+│   │   └── preferencesRoutes.test.ts
 │   └── unit/
 │       ├── CatalogService.test.ts
 │       ├── domainSchemas.test.ts
 │       ├── MovieMapper.test.ts
+│       ├── PreferenceService.test.ts
 │       └── TmdbClient.test.ts
 └── README.md
 ```

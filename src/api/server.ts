@@ -1,15 +1,22 @@
 import fastify, { FastifyInstance, FastifyServerOptions } from 'fastify';
 import { ZodError } from 'zod';
 import { CatalogService } from '../core/services/CatalogService.js';
+import { PreferenceService } from '../core/services/PreferenceService.js';
 import { TmdbApiError, TmdbRateLimitError } from '../infrastructure/tmdb/types.js';
 import { moviesRoutes } from './routes/movies.routes.js';
+import { preferencesRoutes } from './routes/preferences.routes.js';
 
 export interface BuildAppOptions extends FastifyServerOptions {
   catalogService?: CatalogService;
+  preferenceService?: PreferenceService;
 }
 
 export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
-  const { catalogService = new CatalogService(), ...fastifyOptions } = options;
+  const {
+    catalogService = new CatalogService(),
+    preferenceService = new PreferenceService(),
+    ...fastifyOptions
+  } = options;
 
   const app = fastify(fastifyOptions);
 
@@ -69,6 +76,11 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
   app.register(moviesRoutes, {
     prefix: '/api/movies',
     catalogService,
+  });
+
+  app.register(preferencesRoutes, {
+    prefix: '/api/preferences',
+    preferenceService,
   });
 
   return app;
