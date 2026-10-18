@@ -198,4 +198,88 @@ describe('PreferenceService Unit Tests', () => {
     expect(found?.movieId).toBe(777);
     expect(notFound).toBeNull();
   });
+
+  it('deve remover uma preferencia existente retornando true e false para item inexistente', async () => {
+    const repository = new InMemoryPreferenceRepository();
+    const service = new PreferenceService(repository);
+
+    await service.recordPreference(user1, 888, PreferenceStatus.WANT_TO_WATCH);
+
+    const removed = await service.removePreference(user1, 888);
+    expect(removed).toBe(true);
+
+    const check = await service.getUserPreferenceForMovie(user1, 888);
+    expect(check).toBeNull();
+
+    const removedAgain = await service.removePreference(user1, 888);
+    expect(removedAgain).toBe(false);
+  });
+
+  it('deve enriquecer preferencias com metadados do catalogo e suportar busca e filtros de genero', async () => {
+    const repository = new InMemoryPreferenceRepository();
+    const mockCatalogService = {
+      getMovieDetails: async (id: number) => ({
+        tmdbId: id,
+        title: id === 10 ? 'Interestelar' : id === 20 ? 'Duna: Parte 2' : 'O Poderoso Chefão',
+        originalTitle: 'Movie',
+        overview: 'Overview',
+        posterPath: `/poster-${id}.jpg`,
+        backdropPath: `/backdrop-${id}.jpg`,
+        releaseYear: 2024,
+        runtimeMinutes: 150,
+        voteAverage: 8.9,
+        genres: id === 10 ? [{ id: 878, name: 'Ficção Científica' }] : [{ id: 18, name: 'Drama' }],
+        streamingProviders: [],
+        syncedAt: new Date(),
+      }),
+    } as any;
+
+    const service = new PreferenceService(repository, mockCatalogService);
+
+    await service.recordPreference(user1, 10, PreferenceStatus.WANT_TO_WATCH);
+    await service.recordPreference(user1, 20, PreferenceStatus.WANT_TO_WATCH);
+    await service.recordPreference(user1, 30, PreferenceStatus.WANT_TO_WATCH);
+    await service.recordPreference(user1, 40, PreferenceStatus.SKIPPED);
+
+    const allWatchlist = await service.getUserEnrichedWatchlist(user1);
+    expect(allWatchlist.totalResults).toBe(3);
+    expect(allWatchlist.items).toHaveLength(3);
+    // Garante que SKIPPED não foi incluído
+    expect(allWatchlist.items.some((i) => i.preference.movieId === 40)).toBe(false);
+
+    // Filtro por busca textual
+    const searched = await service.getUserEnrichedWatchlist(user1, { search: 'duna' });
+    expect(searched.totalResults).toBe(1);
+    expect(searched.items[0]?.movie.title).toBe('Duna: Parte 2');
+
+    // Filtro por gênero (Ficção Científica = 878)
+    const genreFiltered = await service.getUserEnrichedWatchlist(user1, { genreId: 878 });
+    expect(genreFiltered.totalResults).toBe(1);
+    expect(genreFiltered.items[0]?.movie.title).toBe('Interestelar');
+
+    // Paginação com limite de 2
+    const paginated = await service.getUserEnrichedWatchlist(user1, { page: 1, limit: 2 });
+    expect(paginated.items).toHaveLength(2);
+    expect(paginated.page).toBe(1);
+    expect(paginated.totalPages).toBe(2);
+  });
+
+  it('deve utilizar fallback gracioso de metadados caso o servico de catalogo falhe', async () => {
+    const repository = new InMemoryPreferenceRepository();
+    const failingCatalogService = {
+      getMovieDetails: async () => {
+        throw new Error('TMDB connection error');
+      },
+    } as any;
+
+    const service = new PreferenceService(repository, failingCatalogService);
+
+    await service.recordPreference(user1, 999, PreferenceStatus.ALREADY_WATCHED);
+
+    const history = await service.getUserEnrichedHistory(user1);
+    expect(history.totalResults).toBe(1);
+    expect(history.items[0]?.movie.tmdbId).toBe(999);
+    expect(history.items[0]?.movie.title).toBe('Filme #999');
+    expect(history.items[0]?.movie.overview).toBe('Sinopse indisponível no momento.');
+  });
 });

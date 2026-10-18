@@ -27,6 +27,7 @@ export interface PreferenceRepository {
     userIds: readonly string[],
     movieId: number,
   ): Promise<readonly UserMoviePreference[]>;
+  delete(userId: string, movieId: number): Promise<boolean>;
   clear(): Promise<void>;
 }
 
@@ -121,6 +122,11 @@ export class InMemoryPreferenceRepository implements PreferenceRepository {
     }
 
     return candidates.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+  }
+
+  async delete(userId: string, movieId: number): Promise<boolean> {
+    const key = this.buildKey(userId, movieId);
+    return this.preferences.delete(key);
   }
 
   async clear(): Promise<void> {

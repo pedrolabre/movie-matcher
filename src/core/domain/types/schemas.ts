@@ -167,3 +167,18 @@ export const groupSafePreferenceSchema = z.object({
 export type RecordPreferenceBody = z.infer<typeof recordPreferenceBodySchema>;
 export type GetUserPreferencesQuery = z.infer<typeof getUserPreferencesQuerySchema>;
 export type GroupSafePreferenceDto = z.infer<typeof groupSafePreferenceSchema>;
+
+export const getUserListQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+  genreId: z.coerce.number().int().positive().optional(),
+  search: z.string().trim().optional(),
+});
+
+export const deletePreferenceParamsSchema = z.object({
+  movieId: z.coerce.number().int().positive('ID do filme deve ser um número inteiro positivo'),
+});
+
+export type GetUserListQuery = z.infer<typeof getUserListQuerySchema>;
+export type DeletePreferenceParams = z.infer<typeof deletePreferenceParamsSchema>;
+

@@ -1,3 +1,4 @@
+import { Movie } from '../domain/entities/Movie.js';
 import { UserMoviePreference } from '../domain/entities/UserMoviePreference.js';
 import { PreferenceStatus } from '../domain/enums/PreferenceStatus.js';
 import { GroupSafePreferenceDto } from '../domain/types/schemas.js';
@@ -6,17 +7,41 @@ import {
   PreferenceRepository,
   UpsertPreferenceResult,
 } from '../../infrastructure/database/repositories/PreferenceRepository.js';
+import { CatalogService } from './CatalogService.js';
 
 export interface GetPreferencesOptions {
   readonly status?: PreferenceStatus | undefined;
   readonly includeSkipped?: boolean | undefined;
 }
 
+export interface EnrichedUserPreference {
+  readonly preference: UserMoviePreference;
+  readonly movie: Movie;
+}
+
+export interface GetEnrichedPreferencesOptions {
+  readonly status?: PreferenceStatus | undefined;
+  readonly genreId?: number | undefined;
+  readonly search?: string | undefined;
+  readonly page?: number | undefined;
+  readonly limit?: number | undefined;
+}
+
+export interface PaginatedEnrichedPreferences {
+  readonly items: readonly EnrichedUserPreference[];
+  readonly page: number;
+  readonly limit: number;
+  readonly totalPages: number;
+  readonly totalResults: number;
+}
+
 export class PreferenceService {
   private readonly repository: PreferenceRepository;
+  private readonly catalogService: CatalogService;
 
-  constructor(repository?: PreferenceRepository) {
+  constructor(repository?: PreferenceRepository, catalogService?: CatalogService) {
     this.repository = repository ?? new InMemoryPreferenceRepository();
+    this.catalogService = catalogService ?? new CatalogService();
   }
 
   async recordPreference(
@@ -25,6 +50,10 @@ export class PreferenceService {
     status: PreferenceStatus,
   ): Promise<UpsertPreferenceResult> {
     return this.repository.upsert(userId, movieId, status);
+  }
+
+  async removePreference(userId: string, movieId: number): Promise<boolean> {
+    return this.repository.delete(userId, movieId);
   }
 
   async getUserPreferences(
@@ -46,6 +75,92 @@ export class PreferenceService {
 
   async getUserHistory(userId: string): Promise<readonly UserMoviePreference[]> {
     return this.repository.findByUserId(userId, {
+      status: PreferenceStatus.ALREADY_WATCHED,
+    });
+  }
+
+  async getEnrichedPreferences(
+    userId: string,
+    options?: GetEnrichedPreferencesOptions,
+  ): Promise<PaginatedEnrichedPreferences> {
+    const rawPreferences = await this.repository.findByUserId(userId, {
+      status: options?.status,
+      excludeSkipped: true,
+    });
+
+    const enrichedList: EnrichedUserPreference[] = [];
+
+    for (const preference of rawPreferences) {
+      let movie: Movie;
+      try {
+        movie = await this.catalogService.getMovieDetails(preference.movieId);
+      } catch {
+        movie = {
+          tmdbId: preference.movieId,
+          title: `Filme #${preference.movieId}`,
+          originalTitle: `Movie #${preference.movieId}`,
+          overview: 'Sinopse indisponível no momento.',
+          posterPath: null,
+          backdropPath: null,
+          releaseYear: new Date(preference.createdAt).getFullYear(),
+          runtimeMinutes: null,
+          voteAverage: 0,
+          genres: [],
+          streamingProviders: [],
+          syncedAt: new Date(),
+        };
+      }
+
+      enrichedList.push({ preference, movie });
+    }
+
+    let filtered = enrichedList;
+
+    if (options?.search && options.search.trim().length > 0) {
+      const query = options.search.trim().toLowerCase();
+      filtered = filtered.filter((item) =>
+        item.movie.title.toLowerCase().includes(query),
+      );
+    }
+
+    if (typeof options?.genreId === 'number') {
+      filtered = filtered.filter((item) =>
+        item.movie.genres.some((genre) => genre.id === options.genreId),
+      );
+    }
+
+    const page = options?.page && options.page > 0 ? options.page : 1;
+    const limit = options?.limit && options.limit > 0 ? options.limit : 20;
+    const totalResults = filtered.length;
+    const totalPages = Math.max(1, Math.ceil(totalResults / limit));
+    const offset = (page - 1) * limit;
+    const items = filtered.slice(offset, offset + limit);
+
+    return {
+      items,
+      page,
+      limit,
+      totalPages,
+      totalResults,
+    };
+  }
+
+  async getUserEnrichedWatchlist(
+    userId: string,
+    options?: Omit<GetEnrichedPreferencesOptions, 'status'>,
+  ): Promise<PaginatedEnrichedPreferences> {
+    return this.getEnrichedPreferences(userId, {
+      ...options,
+      status: PreferenceStatus.WANT_TO_WATCH,
+    });
+  }
+
+  async getUserEnrichedHistory(
+    userId: string,
+    options?: Omit<GetEnrichedPreferencesOptions, 'status'>,
+  ): Promise<PaginatedEnrichedPreferences> {
+    return this.getEnrichedPreferences(userId, {
+      ...options,
       status: PreferenceStatus.ALREADY_WATCHED,
     });
   }

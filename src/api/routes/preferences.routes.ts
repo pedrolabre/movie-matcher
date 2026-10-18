@@ -1,6 +1,8 @@
 import { FastifyInstance, FastifyPluginAsync } from 'fastify';
 import { PreferenceService } from '../../core/services/PreferenceService.js';
 import {
+  deletePreferenceParamsSchema,
+  getUserListQuerySchema,
   getUserPreferencesQuerySchema,
   recordPreferenceBodySchema,
 } from '../../core/domain/types/schemas.js';
@@ -37,6 +39,57 @@ export const preferencesRoutes: FastifyPluginAsync<PreferencesRoutesOptions> = a
       success: true,
       preference: result.preference,
       isNew: result.isNew,
+    });
+  });
+
+  fastify.get('/me/watchlist', async (request, reply) => {
+    const headerUserId = request.headers['x-user-id'];
+    if (typeof headerUserId !== 'string' || headerUserId.trim().length === 0) {
+      return reply.status(401).send({
+        statusCode: 401,
+        error: 'Unauthorized',
+        message: 'Usuário não autenticado',
+      });
+    }
+
+    const query = getUserListQuerySchema.parse(request.query);
+    const result = await preferenceService.getUserEnrichedWatchlist(headerUserId.trim(), query);
+
+    return reply.status(200).send(result);
+  });
+
+  fastify.get('/me/history', async (request, reply) => {
+    const headerUserId = request.headers['x-user-id'];
+    if (typeof headerUserId !== 'string' || headerUserId.trim().length === 0) {
+      return reply.status(401).send({
+        statusCode: 401,
+        error: 'Unauthorized',
+        message: 'Usuário não autenticado',
+      });
+    }
+
+    const query = getUserListQuerySchema.parse(request.query);
+    const result = await preferenceService.getUserEnrichedHistory(headerUserId.trim(), query);
+
+    return reply.status(200).send(result);
+  });
+
+  fastify.delete('/:movieId', async (request, reply) => {
+    const headerUserId = request.headers['x-user-id'];
+    if (typeof headerUserId !== 'string' || headerUserId.trim().length === 0) {
+      return reply.status(401).send({
+        statusCode: 401,
+        error: 'Unauthorized',
+        message: 'Usuário não autenticado',
+      });
+    }
+
+    const params = deletePreferenceParamsSchema.parse(request.params);
+    const removed = await preferenceService.removePreference(headerUserId.trim(), params.movieId);
+
+    return reply.status(200).send({
+      success: true,
+      removed,
     });
   });
 

@@ -18,7 +18,8 @@ movie-matcher/
 │   ├── api/
 │   │   ├── routes/
 │   │   │   ├── movies.routes.ts
-│   │   │   └── preferences.routes.ts
+│   │   │   ├── preferences.routes.ts
+│   │   │   └── users.routes.ts
 │   │   └── server.ts
 │   ├── core/
 │   │   ├── domain/
@@ -41,34 +42,42 @@ movie-matcher/
 │   │   └── services/
 │   │       ├── CatalogService.ts
 │   │       └── PreferenceService.ts
-│   └── infrastructure/
-│       ├── cache/
-│       │   ├── CacheService.ts
-│       │   └── MemoryCacheService.ts
-│       ├── database/
-│       │   └── repositories/
-│       │       └── PreferenceRepository.ts
-│       └── tmdb/
-│           ├── mappers/
-│           │   └── MovieMapper.ts
-│           ├── TmdbClient.ts
-│           └── types.ts
+│   ├── infrastructure/
+│   │   ├── cache/
+│   │   │   ├── CacheService.ts
+│   │   │   └── MemoryCacheService.ts
+│   │   ├── database/
+│   │   │   └── repositories/
+│   │   │       └── PreferenceRepository.ts
+│   │   └── tmdb/
+│   │       ├── mappers/
+│   │       │   └── MovieMapper.ts
+│   │       ├── TmdbClient.ts
+│   │       └── types.ts
 │   └── mobile/
 │       ├── components/
-│       │   └── SwipeDeck/
-│       │       ├── MovieCard.tsx
-│       │       ├── SwipeDeck.tsx
-│       │       └── useSwipeGesture.ts
+│       │   ├── SwipeDeck/
+│       │   │   ├── MovieCard.tsx
+│       │   │   ├── SwipeDeck.tsx
+│       │   │   └── useSwipeGesture.ts
+│       │   └── Watchlist/
+│       │       └── MovieGridCard.tsx
+│       ├── screens/
+│       │   ├── PersonalHistoryScreen.tsx
+│       │   └── PersonalWatchlistScreen.tsx
 │       └── stores/
 │           └── useDeckStore.ts
 ├── tests/
 │   ├── integration/
 │   │   ├── moviesRoutes.test.ts
-│   │   └── preferencesRoutes.test.ts
+│   │   ├── preferencesRoutes.test.ts
+│   │   └── userLists.test.ts
 │   └── unit/
 │       ├── CatalogService.test.ts
 │       ├── domainSchemas.test.ts
+│       ├── MovieGridCard.test.ts
 │       ├── MovieMapper.test.ts
+│       ├── PersonalListsScreens.test.ts
 │       ├── PreferenceService.test.ts
 │       ├── TmdbClient.test.ts
 │       └── useDeckStore.test.ts
