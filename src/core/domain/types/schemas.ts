@@ -182,3 +182,20 @@ export const deletePreferenceParamsSchema = z.object({
 export type GetUserListQuery = z.infer<typeof getUserListQuerySchema>;
 export type DeletePreferenceParams = z.infer<typeof deletePreferenceParamsSchema>;
 
+export const joinGroupByInviteCodeBodySchema = z
+  .object({
+    inviteCode: z.string().trim().min(4).max(16).optional(),
+    code: z.string().trim().min(4).max(16).optional(),
+    userId: z.string().uuid('ID do usuário deve ser um UUID válido').optional(),
+  })
+  .refine((data) => Boolean(data.inviteCode || data.code), {
+    message: 'Código de convite obrigatório',
+  });
+
+export const groupIdParamsSchema = z.object({
+  groupId: z.string().uuid('ID do grupo deve ser um UUID válido'),
+});
+
+export type JoinGroupByInviteCodeBody = z.infer<typeof joinGroupByInviteCodeBodySchema>;
+export type GroupIdParams = z.infer<typeof groupIdParamsSchema>;
+

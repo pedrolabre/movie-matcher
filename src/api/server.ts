@@ -2,21 +2,30 @@ import fastify, { FastifyInstance, FastifyServerOptions } from 'fastify';
 import { ZodError } from 'zod';
 import { CatalogService } from '../core/services/CatalogService.js';
 import { PreferenceService } from '../core/services/PreferenceService.js';
+import { GroupService } from '../core/services/GroupService.js';
 import { TmdbApiError, TmdbRateLimitError } from '../infrastructure/tmdb/types.js';
 import { moviesRoutes } from './routes/movies.routes.js';
 import { preferencesRoutes } from './routes/preferences.routes.js';
 import { usersRoutes } from './routes/users.routes.js';
+import { groupsRoutes } from './routes/groups.routes.js';
 
 export interface BuildAppOptions extends FastifyServerOptions {
   catalogService?: CatalogService;
   preferenceService?: PreferenceService;
+  groupService?: GroupService;
 }
 
 export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
   const catalogService = options.catalogService ?? new CatalogService();
   const preferenceService =
     options.preferenceService ?? new PreferenceService(undefined, catalogService);
-  const { catalogService: _, preferenceService: __, ...fastifyOptions } = options;
+  const groupService = options.groupService ?? new GroupService();
+  const {
+    catalogService: _,
+    preferenceService: __,
+    groupService: ___,
+    ...fastifyOptions
+  } = options;
 
   const app = fastify(fastifyOptions);
 
@@ -86,6 +95,11 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
   app.register(usersRoutes, {
     prefix: '/api/users',
     preferenceService,
+  });
+
+  app.register(groupsRoutes, {
+    prefix: '/api/groups',
+    groupService,
   });
 
   return app;

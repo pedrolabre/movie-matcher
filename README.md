@@ -17,6 +17,7 @@ movie-matcher/
 ├── src/
 │   ├── api/
 │   │   ├── routes/
+│   │   │   ├── groups.routes.ts
 │   │   │   ├── movies.routes.ts
 │   │   │   ├── preferences.routes.ts
 │   │   │   └── users.routes.ts
@@ -39,15 +40,19 @@ movie-matcher/
 │   │   │   │   └── QuorumRule.ts
 │   │   │   └── types/
 │   │   │       └── schemas.ts
-│   │   └── services/
-│   │       ├── CatalogService.ts
-│   │       └── PreferenceService.ts
+│   │   ├── services/
+│   │   │   ├── CatalogService.ts
+│   │   │   ├── GroupService.ts
+│   │   │   └── PreferenceService.ts
+│   │   └── utils/
+│   │       └── inviteCode.ts
 │   ├── infrastructure/
 │   │   ├── cache/
 │   │   │   ├── CacheService.ts
 │   │   │   └── MemoryCacheService.ts
 │   │   ├── database/
 │   │   │   └── repositories/
+│   │   │       ├── GroupRepository.ts
 │   │   │       └── PreferenceRepository.ts
 │   │   └── tmdb/
 │   │       ├── mappers/
@@ -56,6 +61,8 @@ movie-matcher/
 │   │       └── types.ts
 │   └── mobile/
 │       ├── components/
+│       │   ├── Group/
+│       │   │   └── GroupCard.tsx
 │       │   ├── SwipeDeck/
 │       │   │   ├── MovieCard.tsx
 │       │   │   ├── SwipeDeck.tsx
@@ -63,18 +70,24 @@ movie-matcher/
 │       │   └── Watchlist/
 │       │       └── MovieGridCard.tsx
 │       ├── screens/
+│       │   ├── GroupListScreen.tsx
 │       │   ├── PersonalHistoryScreen.tsx
 │       │   └── PersonalWatchlistScreen.tsx
 │       └── stores/
 │           └── useDeckStore.ts
 ├── tests/
 │   ├── integration/
+│   │   ├── groupsRoutes.test.ts
 │   │   ├── moviesRoutes.test.ts
 │   │   ├── preferencesRoutes.test.ts
 │   │   └── userLists.test.ts
 │   └── unit/
 │       ├── CatalogService.test.ts
 │       ├── domainSchemas.test.ts
+│       ├── GroupCard.test.ts
+│       ├── GroupListScreen.test.ts
+│       ├── GroupService.test.ts
+│       ├── inviteCode.test.ts
 │       ├── MovieGridCard.test.ts
 │       ├── MovieMapper.test.ts
 │       ├── PersonalListsScreens.test.ts
