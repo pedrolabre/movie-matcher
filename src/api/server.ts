@@ -9,11 +9,17 @@ import {
   MatchRepository,
 } from '../infrastructure/database/repositories/MatchRepository.js';
 import { InMemoryPreferenceRepository } from '../infrastructure/database/repositories/PreferenceRepository.js';
+import {
+  InMemoryMatchEventEmitter,
+  MatchEventBus,
+} from '../infrastructure/events/MatchEventEmitter.js';
+import { PushNotificationService } from '../infrastructure/notifications/PushNotificationService.js';
 import { TmdbApiError, TmdbRateLimitError } from '../infrastructure/tmdb/types.js';
 import { moviesRoutes } from './routes/movies.routes.js';
 import { preferencesRoutes } from './routes/preferences.routes.js';
 import { usersRoutes } from './routes/users.routes.js';
 import { groupsRoutes } from './routes/groups.routes.js';
+import { eventsRoutes } from './routes/events.routes.js';
 
 export interface BuildAppOptions extends FastifyServerOptions {
   catalogService?: CatalogService;
@@ -21,12 +27,17 @@ export interface BuildAppOptions extends FastifyServerOptions {
   groupService?: GroupService;
   matchRepository?: MatchRepository;
   matchIntersectionEngine?: MatchIntersectionEngine;
+  matchEventBus?: MatchEventBus;
+  notificationService?: PushNotificationService;
 }
 
 export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
   const catalogService = options.catalogService ?? new CatalogService();
   const groupService = options.groupService ?? new GroupService();
   const matchRepository = options.matchRepository ?? new InMemoryMatchRepository();
+  const matchEventBus = options.matchEventBus ?? new InMemoryMatchEventEmitter();
+  const notificationService =
+    options.notificationService ?? new PushNotificationService();
 
   let preferenceService = options.preferenceService;
   let matchIntersectionEngine = options.matchIntersectionEngine;
@@ -39,6 +50,8 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
       preferenceRepo,
       groupRepo,
       matchRepository,
+      matchEventBus,
+      notificationService,
     );
   }
 
@@ -50,6 +63,8 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
         preferenceRepo,
         groupService.getRepository(),
         matchRepository,
+        matchEventBus,
+        notificationService,
       );
 
     preferenceService = new PreferenceService(
@@ -66,6 +81,8 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
     groupService: ___,
     matchRepository: ____,
     matchIntersectionEngine: _____,
+    matchEventBus: ______,
+    notificationService: _______,
     ...fastifyOptions
   } = options;
 
@@ -143,6 +160,12 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
     prefix: '/api/groups',
     groupService,
     matchIntersectionEngine,
+  });
+
+  app.register(eventsRoutes, {
+    prefix: '/api/groups',
+    groupService,
+    eventBus: matchEventBus,
   });
 
   return app;

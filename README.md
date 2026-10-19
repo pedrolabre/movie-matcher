@@ -17,6 +17,7 @@ movie-matcher/
 ├── src/
 │   ├── api/
 │   │   ├── routes/
+│   │   │   ├── events.routes.ts
 │   │   │   ├── groups.routes.ts
 │   │   │   ├── movies.routes.ts
 │   │   │   ├── preferences.routes.ts
@@ -58,6 +59,10 @@ movie-matcher/
 │   │   │       ├── GroupRepository.ts
 │   │   │       ├── MatchRepository.ts
 │   │   │       └── PreferenceRepository.ts
+│   │   ├── events/
+│   │   │   └── MatchEventEmitter.ts
+│   │   ├── notifications/
+│   │   │   └── PushNotificationService.ts
 │   │   └── tmdb/
 │   │       ├── mappers/
 │   │       │   └── MovieMapper.ts
@@ -81,6 +86,7 @@ movie-matcher/
 │           └── useDeckStore.ts
 ├── tests/
 │   ├── integration/
+│   │   ├── eventsRoutes.test.ts
 │   │   ├── groupsRoutes.test.ts
 │   │   ├── matchIntersection.test.ts
 │   │   ├── moviesRoutes.test.ts
@@ -93,11 +99,13 @@ movie-matcher/
 │       ├── GroupListScreen.test.ts
 │       ├── GroupService.test.ts
 │       ├── inviteCode.test.ts
+│       ├── MatchEventEmitter.test.ts
 │       ├── MatchIntersectionEngine.test.ts
 │       ├── MovieGridCard.test.ts
 │       ├── MovieMapper.test.ts
 │       ├── PersonalListsScreens.test.ts
 │       ├── PreferenceService.test.ts
+│       ├── PushNotificationService.test.ts
 │       ├── QuorumEvaluator.test.ts
 │       ├── TmdbClient.test.ts
 │       └── useDeckStore.test.ts

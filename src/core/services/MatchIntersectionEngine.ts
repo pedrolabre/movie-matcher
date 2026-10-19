@@ -9,6 +9,12 @@ import {
   MatchRepository,
   MatchWithVoters,
 } from '../../infrastructure/database/repositories/MatchRepository.js';
+import {
+  createMatchEventPayload,
+  MatchEventBus,
+  MatchEventPayload,
+} from '../../infrastructure/events/MatchEventEmitter.js';
+import { PushNotificationService } from '../../infrastructure/notifications/PushNotificationService.js';
 
 export interface MatchEvaluationSummary {
   readonly groupId: string;
@@ -22,6 +28,7 @@ export interface MatchEvaluationSummary {
   readonly match: GroupMovieMatch | null;
   readonly isNewMatch: boolean;
   readonly voterUserIds: readonly string[];
+  readonly eventPayload?: MatchEventPayload | undefined;
 }
 
 export interface EvaluateMovieResult {
@@ -37,18 +44,33 @@ export class MatchIntersectionEngine {
     private readonly preferenceRepository: PreferenceRepository,
     private readonly groupRepository: GroupRepository,
     private readonly matchRepository: MatchRepository,
+    private readonly eventBus?: MatchEventBus | null,
+    private readonly notificationService?: PushNotificationService | null,
   ) {}
+
+  getEventBus(): MatchEventBus | null {
+    return this.eventBus ?? null;
+  }
+
+  getNotificationService(): PushNotificationService | null {
+    return this.notificationService ?? null;
+  }
 
   async evaluateMovieForUserGroups(
     userId: string,
     movieId: number,
+    movieTitle?: string,
   ): Promise<EvaluateMovieResult> {
     const memberships = await this.groupRepository.findGroupsByUserId(userId);
     const summaries: MatchEvaluationSummary[] = [];
     const matchedGroupIds: string[] = [];
 
     for (const membership of memberships) {
-      const summary = await this.evaluateMovieForGroup(membership.group.id, movieId);
+      const summary = await this.evaluateMovieForGroup(
+        membership.group.id,
+        movieId,
+        movieTitle,
+      );
       summaries.push(summary);
 
       if (summary.isMatch && summary.isNewMatch) {
@@ -68,6 +90,7 @@ export class MatchIntersectionEngine {
   async evaluateMovieForGroup(
     groupId: string,
     movieId: number,
+    movieTitle?: string,
   ): Promise<MatchEvaluationSummary> {
     const group = await this.groupRepository.findById(groupId);
     if (!group) {
@@ -90,7 +113,6 @@ export class MatchIntersectionEngine {
     const memberCount = members.length;
     const memberUserIds = members.map((member) => member.userId);
 
-    // Consulta estrita: apenas preferências WANT_TO_WATCH de membros ativos
     const positivePreferences = await this.preferenceRepository.findConsensualCandidates(
       memberUserIds,
       movieId,
@@ -126,6 +148,34 @@ export class MatchIntersectionEngine {
         voterUserIds,
       );
 
+      let eventPayload: MatchEventPayload | undefined;
+
+      if (isNewMatch) {
+        eventPayload = createMatchEventPayload({
+          groupId: group.id,
+          groupName: group.name,
+          movieId,
+          movieTitle,
+          quorumLevel: evaluation.quorumLevel,
+          positiveVotesCount,
+          memberCount,
+          threshold: evaluation.threshold,
+          voterUserIds,
+        });
+
+        if (this.eventBus) {
+          await this.eventBus.publish(eventPayload);
+        }
+
+        if (this.notificationService) {
+          await this.notificationService.dispatchToMembers(
+            group.id,
+            memberUserIds,
+            eventPayload,
+          );
+        }
+      }
+
       return {
         groupId: group.id,
         groupName: group.name,
@@ -138,10 +188,10 @@ export class MatchIntersectionEngine {
         match: savedMatch,
         isNewMatch,
         voterUserIds,
+        eventPayload,
       };
     }
 
-    // Se não atingiu quórum e existia um match ativo prévio, arquiva/desativa
     let archivedMatch: GroupMovieMatch | null = null;
     if (existingMatch && existingMatch.status === MatchStatus.ACTIVE) {
       archivedMatch = await this.matchRepository.updateMatchStatus(
@@ -193,3 +243,4 @@ export class MatchIntersectionEngine {
     return summaries;
   }
 }
+

@@ -201,7 +201,14 @@ export const getGroupMatchesQuerySchema = z.object({
   movieId: z.coerce.number().int().positive().optional(),
 });
 
+export const getGroupEventsQuerySchema = z.object({
+  since: z.coerce.date().optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+});
+
 export type JoinGroupByInviteCodeBody = z.infer<typeof joinGroupByInviteCodeBodySchema>;
 export type GroupIdParams = z.infer<typeof groupIdParamsSchema>;
 export type GetGroupMatchesQuery = z.infer<typeof getGroupMatchesQuerySchema>;
+export type GetGroupEventsQuery = z.infer<typeof getGroupEventsQuerySchema>;
+
 

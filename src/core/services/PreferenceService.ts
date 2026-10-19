@@ -72,9 +72,18 @@ export class PreferenceService {
 
     let matchesGenerated: readonly string[] = [];
     if (this.intersectionEngine) {
+      let movieTitle: string | undefined;
+      try {
+        const movie = await this.catalogService.getMovieDetails(movieId);
+        movieTitle = movie.title;
+      } catch {
+        // Fallback silencioso em falha de metadados
+      }
+
       const evaluation = await this.intersectionEngine.evaluateMovieForUserGroups(
         userId,
         movieId,
+        movieTitle,
       );
       matchesGenerated = evaluation.matchedGroupIds;
     }
