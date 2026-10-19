@@ -132,6 +132,20 @@ export const groupsRoutes: FastifyPluginAsync<GroupsRoutesOptions> = async (
         });
       }
 
+      if (query.enriched) {
+        const matches = await matchIntersectionEngine.getEnrichedGroupMatches(groupId, {
+          status: query.status,
+          movieId: query.movieId,
+        });
+
+        return reply.status(200).send({
+          success: true,
+          groupId,
+          matches,
+          enriched: true,
+        });
+      }
+
       const matches = await matchIntersectionEngine.getGroupMatches(groupId, {
         status: query.status,
         movieId: query.movieId,
@@ -141,6 +155,7 @@ export const groupsRoutes: FastifyPluginAsync<GroupsRoutesOptions> = async (
         success: true,
         groupId,
         matches,
+        enriched: false,
       });
     });
   }

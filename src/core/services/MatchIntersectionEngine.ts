@@ -1,7 +1,9 @@
 import { GroupMovieMatch } from '../domain/entities/GroupMovieMatch.js';
+import { Movie } from '../domain/entities/Movie.js';
 import { MatchStatus } from '../domain/enums/MatchStatus.js';
 import { QuorumLevel } from '../domain/enums/QuorumLevel.js';
 import { evaluateQuorum, QuorumEvaluationResult } from '../algorithms/QuorumEvaluator.js';
+import { CatalogService } from './CatalogService.js';
 import { PreferenceRepository } from '../../infrastructure/database/repositories/PreferenceRepository.js';
 import { GroupRepository } from '../../infrastructure/database/repositories/GroupRepository.js';
 import {
@@ -31,6 +33,19 @@ export interface MatchEvaluationSummary {
   readonly eventPayload?: MatchEventPayload | undefined;
 }
 
+export interface VoterProfile {
+  readonly id: string;
+  readonly displayName?: string | undefined;
+  readonly avatarUrl?: string | null | undefined;
+}
+
+export interface EnrichedGroupMovieMatch {
+  readonly match: GroupMovieMatch;
+  readonly movie: Movie;
+  readonly voters: readonly VoterProfile[];
+  readonly memberCount?: number | undefined;
+}
+
 export interface EvaluateMovieResult {
   readonly userId: string;
   readonly movieId: number;
@@ -46,7 +61,12 @@ export class MatchIntersectionEngine {
     private readonly matchRepository: MatchRepository,
     private readonly eventBus?: MatchEventBus | null,
     private readonly notificationService?: PushNotificationService | null,
+    private readonly catalogService?: CatalogService | null,
   ) {}
+
+  getCatalogService(): CatalogService | null {
+    return this.catalogService ?? null;
+  }
 
   getEventBus(): MatchEventBus | null {
     return this.eventBus ?? null;
@@ -220,6 +240,62 @@ export class MatchIntersectionEngine {
     filter?: MatchFilter,
   ): Promise<readonly GroupMovieMatch[]> {
     return this.matchRepository.findMatchesByGroupId(groupId, filter);
+  }
+
+  async getEnrichedGroupMatches(
+    groupId: string,
+    filter?: MatchFilter,
+  ): Promise<readonly EnrichedGroupMovieMatch[]> {
+    const matches = await this.matchRepository.findMatchesByGroupId(groupId, filter);
+    const group = await this.groupRepository.findById(groupId);
+    const memberCount = group ? await this.groupRepository.countMembers(groupId) : undefined;
+
+    const enriched: EnrichedGroupMovieMatch[] = [];
+
+    for (const match of matches) {
+      let movie: Movie;
+      if (this.catalogService) {
+        try {
+          movie = await this.catalogService.getMovieDetails(match.movieId);
+        } catch {
+          movie = this.buildFallbackMovie(match.movieId, match.matchedAt);
+        }
+      } else {
+        movie = this.buildFallbackMovie(match.movieId, match.matchedAt);
+      }
+
+      const votersRecord = await this.matchRepository.getVotersByMatchId(match.id);
+      const voters: VoterProfile[] = votersRecord.map((voter) => ({
+        id: voter.userId,
+        displayName: `Membro ${voter.userId.slice(0, 4)}`,
+      }));
+
+      enriched.push({
+        match,
+        movie,
+        voters,
+        memberCount,
+      });
+    }
+
+    return enriched;
+  }
+
+  private buildFallbackMovie(movieId: number, date: Date): Movie {
+    return {
+      tmdbId: movieId,
+      title: `Filme #${movieId}`,
+      originalTitle: `Movie #${movieId}`,
+      overview: 'Sinopse indisponível no momento.',
+      posterPath: null,
+      backdropPath: null,
+      releaseYear: new Date(date).getFullYear(),
+      runtimeMinutes: null,
+      voteAverage: 0,
+      genres: [],
+      streamingProviders: [],
+      syncedAt: new Date(),
+    };
   }
 
   async getGroupMatchDetails(

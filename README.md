@@ -72,6 +72,9 @@ movie-matcher/
 │       ├── components/
 │       │   ├── Group/
 │       │   │   └── GroupCard.tsx
+│       │   ├── MatchList/
+│       │   │   ├── ConsensualMatchCard.tsx
+│       │   │   └── VoterAvatarStack.tsx
 │       │   ├── SwipeDeck/
 │       │   │   ├── MovieCard.tsx
 │       │   │   ├── SwipeDeck.tsx
@@ -80,6 +83,7 @@ movie-matcher/
 │       │       └── MovieGridCard.tsx
 │       ├── screens/
 │       │   ├── GroupListScreen.tsx
+│       │   ├── GroupWatchlistScreen.tsx
 │       │   ├── PersonalHistoryScreen.tsx
 │       │   └── PersonalWatchlistScreen.tsx
 │       └── stores/
@@ -94,10 +98,12 @@ movie-matcher/
 │   │   └── userLists.test.ts
 │   └── unit/
 │       ├── CatalogService.test.ts
+│       ├── ConsensualMatchCard.test.ts
 │       ├── domainSchemas.test.ts
 │       ├── GroupCard.test.ts
 │       ├── GroupListScreen.test.ts
 │       ├── GroupService.test.ts
+│       ├── GroupWatchlistScreen.test.ts
 │       ├── inviteCode.test.ts
 │       ├── MatchEventEmitter.test.ts
 │       ├── MatchIntersectionEngine.test.ts
@@ -108,6 +114,7 @@ movie-matcher/
 │       ├── PushNotificationService.test.ts
 │       ├── QuorumEvaluator.test.ts
 │       ├── TmdbClient.test.ts
-│       └── useDeckStore.test.ts
+│       ├── useDeckStore.test.ts
+│       └── VoterAvatarStack.test.ts
 └── README.md
 ```

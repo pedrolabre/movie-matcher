@@ -52,6 +52,7 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
       matchRepository,
       matchEventBus,
       notificationService,
+      catalogService,
     );
   }
 
@@ -65,6 +66,7 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
         matchRepository,
         matchEventBus,
         notificationService,
+        catalogService,
       );
 
     preferenceService = new PreferenceService(

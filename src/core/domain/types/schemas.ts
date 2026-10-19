@@ -199,6 +199,13 @@ export const groupIdParamsSchema = z.object({
 export const getGroupMatchesQuerySchema = z.object({
   status: matchStatusSchema.optional(),
   movieId: z.coerce.number().int().positive().optional(),
+  enriched: z
+    .union([z.boolean(), z.enum(['true', 'false'])])
+    .optional()
+    .transform((val) => {
+      if (val === undefined) return undefined;
+      return val === true || val === 'true';
+    }),
 });
 
 export const getGroupEventsQuerySchema = z.object({

@@ -138,6 +138,20 @@ describe('Match Intersection & Quorum Engine Integration Tests', () => {
       expect(matchesList[0].quorumLevel).toBe(QuorumLevel.PERFECT);
       expect(matchesList[0].status).toBe(MatchStatus.ACTIVE);
 
+      // 5.1. Consulta matches enriquecidos da sala via query enriched=true
+      const groupMatchesEnriched = await app.inject({
+        method: 'GET',
+        url: `/api/groups/${groupId}/matches?enriched=true`,
+      });
+      expect(groupMatchesEnriched.statusCode).toBe(200);
+      const enrichedBody = groupMatchesEnriched.json();
+      expect(enrichedBody.success).toBe(true);
+      expect(enrichedBody.enriched).toBe(true);
+      expect(enrichedBody.matches).toHaveLength(1);
+      expect(enrichedBody.matches[0].movie.tmdbId).toBe(movieId);
+      expect(enrichedBody.matches[0].voters).toHaveLength(2);
+      expect(enrichedBody.matches[0].memberCount).toBe(2);
+
       // 6. Detalhes com votantes
       const details = await intersectionEngine.getGroupMatchDetails(groupId, movieId);
       expect(details).not.toBeNull();
