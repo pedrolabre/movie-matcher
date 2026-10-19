@@ -1,20 +1,23 @@
 import { FastifyInstance, FastifyPluginAsync } from 'fastify';
 import {
   createGroupDtoSchema,
+  getGroupMatchesQuerySchema,
   groupIdParamsSchema,
   joinGroupByInviteCodeBodySchema,
 } from '../../core/domain/types/schemas.js';
 import { GroupService } from '../../core/services/GroupService.js';
+import { MatchIntersectionEngine } from '../../core/services/MatchIntersectionEngine.js';
 
 export interface GroupsRoutesOptions {
   groupService: GroupService;
+  matchIntersectionEngine?: MatchIntersectionEngine;
 }
 
 export const groupsRoutes: FastifyPluginAsync<GroupsRoutesOptions> = async (
   fastify: FastifyInstance,
   options: GroupsRoutesOptions,
 ) => {
-  const { groupService } = options;
+  const { groupService, matchIntersectionEngine } = options;
 
   fastify.post('/', async (request, reply) => {
     const body = createGroupDtoSchema.parse(request.body);
@@ -114,6 +117,33 @@ export const groupsRoutes: FastifyPluginAsync<GroupsRoutesOptions> = async (
       members,
     });
   });
+
+  if (matchIntersectionEngine) {
+    fastify.get('/:groupId/matches', async (request, reply) => {
+      const { groupId } = groupIdParamsSchema.parse(request.params);
+      const query = getGroupMatchesQuerySchema.parse(request.query);
+      const group = await groupService.getGroupById(groupId);
+
+      if (!group) {
+        return reply.status(404).send({
+          statusCode: 404,
+          error: 'Not Found',
+          message: 'Grupo não encontrado',
+        });
+      }
+
+      const matches = await matchIntersectionEngine.getGroupMatches(groupId, {
+        status: query.status,
+        movieId: query.movieId,
+      });
+
+      return reply.status(200).send({
+        success: true,
+        groupId,
+        matches,
+      });
+    });
+  }
 
   fastify.post('/:groupId/leave', async (request, reply) => {
     const { groupId } = groupIdParamsSchema.parse(request.params);

@@ -3,6 +3,12 @@ import { ZodError } from 'zod';
 import { CatalogService } from '../core/services/CatalogService.js';
 import { PreferenceService } from '../core/services/PreferenceService.js';
 import { GroupService } from '../core/services/GroupService.js';
+import { MatchIntersectionEngine } from '../core/services/MatchIntersectionEngine.js';
+import {
+  InMemoryMatchRepository,
+  MatchRepository,
+} from '../infrastructure/database/repositories/MatchRepository.js';
+import { InMemoryPreferenceRepository } from '../infrastructure/database/repositories/PreferenceRepository.js';
 import { TmdbApiError, TmdbRateLimitError } from '../infrastructure/tmdb/types.js';
 import { moviesRoutes } from './routes/movies.routes.js';
 import { preferencesRoutes } from './routes/preferences.routes.js';
@@ -13,17 +19,53 @@ export interface BuildAppOptions extends FastifyServerOptions {
   catalogService?: CatalogService;
   preferenceService?: PreferenceService;
   groupService?: GroupService;
+  matchRepository?: MatchRepository;
+  matchIntersectionEngine?: MatchIntersectionEngine;
 }
 
 export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
   const catalogService = options.catalogService ?? new CatalogService();
-  const preferenceService =
-    options.preferenceService ?? new PreferenceService(undefined, catalogService);
   const groupService = options.groupService ?? new GroupService();
+  const matchRepository = options.matchRepository ?? new InMemoryMatchRepository();
+
+  let preferenceService = options.preferenceService;
+  let matchIntersectionEngine = options.matchIntersectionEngine;
+
+  if (!matchIntersectionEngine) {
+    const preferenceRepo =
+      preferenceService?.getRepository() ?? new InMemoryPreferenceRepository();
+    const groupRepo = groupService.getRepository();
+    matchIntersectionEngine = new MatchIntersectionEngine(
+      preferenceRepo,
+      groupRepo,
+      matchRepository,
+    );
+  }
+
+  if (!preferenceService) {
+    const preferenceRepo = new InMemoryPreferenceRepository();
+    const engineToUse =
+      options.matchIntersectionEngine ??
+      new MatchIntersectionEngine(
+        preferenceRepo,
+        groupService.getRepository(),
+        matchRepository,
+      );
+
+    preferenceService = new PreferenceService(
+      preferenceRepo,
+      catalogService,
+      engineToUse,
+    );
+    matchIntersectionEngine = engineToUse;
+  }
+
   const {
     catalogService: _,
     preferenceService: __,
     groupService: ___,
+    matchRepository: ____,
+    matchIntersectionEngine: _____,
     ...fastifyOptions
   } = options;
 
@@ -100,6 +142,7 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
   app.register(groupsRoutes, {
     prefix: '/api/groups',
     groupService,
+    matchIntersectionEngine,
   });
 
   return app;

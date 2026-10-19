@@ -50,6 +50,10 @@ export class GroupService {
     this.codeGenerator = codeGenerator;
   }
 
+  getRepository(): GroupRepository {
+    return this.repository;
+  }
+
   async createGroup(
     userId: string,
     data: CreateGroupDto,

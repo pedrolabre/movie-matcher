@@ -8,6 +8,7 @@ import {
   UpsertPreferenceResult,
 } from '../../infrastructure/database/repositories/PreferenceRepository.js';
 import { CatalogService } from './CatalogService.js';
+import { MatchIntersectionEngine } from './MatchIntersectionEngine.js';
 
 export interface GetPreferencesOptions {
   readonly status?: PreferenceStatus | undefined;
@@ -38,10 +39,28 @@ export interface PaginatedEnrichedPreferences {
 export class PreferenceService {
   private readonly repository: PreferenceRepository;
   private readonly catalogService: CatalogService;
+  private readonly intersectionEngine: MatchIntersectionEngine | null;
 
-  constructor(repository?: PreferenceRepository, catalogService?: CatalogService) {
+  constructor(
+    repository?: PreferenceRepository,
+    catalogService?: CatalogService,
+    intersectionEngine?: MatchIntersectionEngine | null,
+  ) {
     this.repository = repository ?? new InMemoryPreferenceRepository();
     this.catalogService = catalogService ?? new CatalogService();
+    this.intersectionEngine = intersectionEngine ?? null;
+  }
+
+  getRepository(): PreferenceRepository {
+    return this.repository;
+  }
+
+  getCatalogService(): CatalogService {
+    return this.catalogService;
+  }
+
+  getIntersectionEngine(): MatchIntersectionEngine | null {
+    return this.intersectionEngine;
   }
 
   async recordPreference(
@@ -49,11 +68,30 @@ export class PreferenceService {
     movieId: number,
     status: PreferenceStatus,
   ): Promise<UpsertPreferenceResult> {
-    return this.repository.upsert(userId, movieId, status);
+    const result = await this.repository.upsert(userId, movieId, status);
+
+    let matchesGenerated: readonly string[] = [];
+    if (this.intersectionEngine) {
+      const evaluation = await this.intersectionEngine.evaluateMovieForUserGroups(
+        userId,
+        movieId,
+      );
+      matchesGenerated = evaluation.matchedGroupIds;
+    }
+
+    return {
+      preference: result.preference,
+      isNew: result.isNew,
+      matchesGenerated,
+    };
   }
 
   async removePreference(userId: string, movieId: number): Promise<boolean> {
-    return this.repository.delete(userId, movieId);
+    const removed = await this.repository.delete(userId, movieId);
+    if (removed && this.intersectionEngine) {
+      await this.intersectionEngine.evaluateMovieForUserGroups(userId, movieId);
+    }
+    return removed;
   }
 
   async getUserPreferences(

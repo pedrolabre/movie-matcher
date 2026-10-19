@@ -196,6 +196,12 @@ export const groupIdParamsSchema = z.object({
   groupId: z.string().uuid('ID do grupo deve ser um UUID válido'),
 });
 
+export const getGroupMatchesQuerySchema = z.object({
+  status: matchStatusSchema.optional(),
+  movieId: z.coerce.number().int().positive().optional(),
+});
+
 export type JoinGroupByInviteCodeBody = z.infer<typeof joinGroupByInviteCodeBodySchema>;
 export type GroupIdParams = z.infer<typeof groupIdParamsSchema>;
+export type GetGroupMatchesQuery = z.infer<typeof getGroupMatchesQuerySchema>;
 

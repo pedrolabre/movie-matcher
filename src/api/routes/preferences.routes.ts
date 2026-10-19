@@ -39,6 +39,7 @@ export const preferencesRoutes: FastifyPluginAsync<PreferencesRoutesOptions> = a
       success: true,
       preference: result.preference,
       isNew: result.isNew,
+      matchesGenerated: result.matchesGenerated ?? [],
     });
   });
 

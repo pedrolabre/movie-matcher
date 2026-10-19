@@ -5,6 +5,7 @@ import { PreferenceStatus } from '../../../core/domain/enums/PreferenceStatus.js
 export interface UpsertPreferenceResult {
   readonly preference: UserMoviePreference;
   readonly isNew: boolean;
+  readonly matchesGenerated?: readonly string[] | undefined;
 }
 
 export interface PreferenceFilter {

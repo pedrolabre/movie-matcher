@@ -23,6 +23,8 @@ movie-matcher/
 │   │   │   └── users.routes.ts
 │   │   └── server.ts
 │   ├── core/
+│   │   ├── algorithms/
+│   │   │   └── QuorumEvaluator.ts
 │   │   ├── domain/
 │   │   │   ├── entities/
 │   │   │   │   ├── Group.ts
@@ -43,6 +45,7 @@ movie-matcher/
 │   │   ├── services/
 │   │   │   ├── CatalogService.ts
 │   │   │   ├── GroupService.ts
+│   │   │   ├── MatchIntersectionEngine.ts
 │   │   │   └── PreferenceService.ts
 │   │   └── utils/
 │   │       └── inviteCode.ts
@@ -53,6 +56,7 @@ movie-matcher/
 │   │   ├── database/
 │   │   │   └── repositories/
 │   │   │       ├── GroupRepository.ts
+│   │   │       ├── MatchRepository.ts
 │   │   │       └── PreferenceRepository.ts
 │   │   └── tmdb/
 │   │       ├── mappers/
@@ -78,6 +82,7 @@ movie-matcher/
 ├── tests/
 │   ├── integration/
 │   │   ├── groupsRoutes.test.ts
+│   │   ├── matchIntersection.test.ts
 │   │   ├── moviesRoutes.test.ts
 │   │   ├── preferencesRoutes.test.ts
 │   │   └── userLists.test.ts
@@ -88,10 +93,12 @@ movie-matcher/
 │       ├── GroupListScreen.test.ts
 │       ├── GroupService.test.ts
 │       ├── inviteCode.test.ts
+│       ├── MatchIntersectionEngine.test.ts
 │       ├── MovieGridCard.test.ts
 │       ├── MovieMapper.test.ts
 │       ├── PersonalListsScreens.test.ts
 │       ├── PreferenceService.test.ts
+│       ├── QuorumEvaluator.test.ts
 │       ├── TmdbClient.test.ts
 │       └── useDeckStore.test.ts
 └── README.md
