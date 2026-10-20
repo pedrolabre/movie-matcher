@@ -247,4 +247,70 @@ describe('Sessions Routes Integration Tests (/api/groups)', () => {
 
     expect(response.statusCode).toBe(404);
   });
+
+  it('GET /:groupId/history > deve retornar 400 se groupId for malformatado', async () => {
+    const app = buildApp();
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/api/groups/not-a-uuid/history',
+    });
+
+    expect(response.statusCode).toBe(400);
+  });
+
+  it('GET /:groupId/history > deve retornar 404 se grupo não existir', async () => {
+    const app = buildApp();
+    const nonExistentGroupId = '00000000-0000-0000-0000-000000000999';
+
+    const response = await app.inject({
+      method: 'GET',
+      url: `/api/groups/${nonExistentGroupId}/history`,
+    });
+
+    expect(response.statusCode).toBe(404);
+  });
+
+  it('GET /:groupId/history > deve retornar histórico vazio e stats zeradas com status 200', async () => {
+    const groupRepo = new InMemoryGroupRepository();
+    const matchRepo = new InMemoryMatchRepository();
+    const sessionRepo = new InMemorySessionRepository();
+
+    const groupService = new GroupService(groupRepo);
+    const sessionService = new SessionService(sessionRepo, matchRepo, groupRepo);
+
+    const app = buildApp({
+      groupService,
+      sessionService,
+      matchRepository: matchRepo,
+      sessionRepository: sessionRepo,
+    });
+
+    const groupId = '11111111-1111-1111-1111-111111111111';
+
+    await groupRepo.create({
+      id: groupId,
+      name: 'Grupo Pipoca',
+      inviteCode: 'PIPOCA4',
+      createdBy: 'user-creator',
+      thresholdRule: QuorumRule.MAJORITY,
+      minPositiveVotes: 2,
+      createdAt: new Date('2026-01-01'),
+      updatedAt: new Date('2026-01-01'),
+    });
+
+    const response = await app.inject({
+      method: 'GET',
+      url: `/api/groups/${groupId}/history`,
+    });
+
+    expect(response.statusCode).toBe(200);
+    const body = response.json();
+    expect(body.success).toBe(true);
+    expect(body.groupId).toBe(groupId);
+    expect(body.stats.totalMoviesWatched).toBe(0);
+    expect(body.stats.totalRuntimeMinutes).toBe(0);
+    expect(body.history).toEqual([]);
+    expect(body.total).toBe(0);
+  });
 });

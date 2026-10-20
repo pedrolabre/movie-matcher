@@ -54,6 +54,7 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
       sessionRepository,
       matchRepository,
       groupService.getRepository(),
+      catalogService,
     );
 
   let preferenceService = options.preferenceService;

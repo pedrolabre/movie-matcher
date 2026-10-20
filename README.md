@@ -82,11 +82,13 @@ movie-matcher/
 │       │   │   ├── MovieCard.tsx
 │       │   │   ├── SwipeDeck.tsx
 │       │   │   └── useSwipeGesture.ts
-│       │   └── Watchlist/
-│       │       └── MovieGridCard.tsx
+│       │   ├── Watchlist/
+│       │   │   └── MovieGridCard.tsx
+│       │   └── GroupStatsHeader.tsx
 │       ├── modals/
 │       │   └── ScheduleSessionModal.tsx
 │       ├── screens/
+│       │   ├── GroupHistoryScreen.tsx
 │       │   ├── GroupListScreen.tsx
 │       │   ├── GroupWatchlistScreen.tsx
 │       │   ├── PersonalHistoryScreen.tsx
@@ -96,6 +98,7 @@ movie-matcher/
 ├── tests/
 │   ├── integration/
 │   │   ├── eventsRoutes.test.ts
+│   │   ├── groupHistory.test.ts
 │   │   ├── groupsRoutes.test.ts
 │   │   ├── matchIntersection.test.ts
 │   │   ├── moviesRoutes.test.ts
@@ -107,8 +110,10 @@ movie-matcher/
 │       ├── ConsensualMatchCard.test.ts
 │       ├── domainSchemas.test.ts
 │       ├── GroupCard.test.ts
+│       ├── GroupHistoryScreen.test.ts
 │       ├── GroupListScreen.test.ts
 │       ├── GroupService.test.ts
+│       ├── GroupStatsHeader.test.ts
 │       ├── GroupWatchlistScreen.test.ts
 │       ├── inviteCode.test.ts
 │       ├── MatchEventEmitter.test.ts

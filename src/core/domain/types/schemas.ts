@@ -240,4 +240,57 @@ export type ScheduleSessionParams = z.infer<typeof scheduleSessionParamsSchema>;
 export type SessionIdParams = z.infer<typeof sessionIdParamsSchema>;
 export type CompleteSessionBody = z.infer<typeof completeSessionBodySchema>;
 
+export const getGroupHistoryQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  searchTerm: z.string().trim().optional(),
+  genreId: z.coerce.number().int().positive().optional(),
+});
+
+export const groupGenreStatSchema = z.object({
+  id: z.number().int(),
+  name: z.string(),
+  count: z.number().int().min(0),
+});
+
+export const groupStatsSchema = z.object({
+  totalMoviesWatched: z.number().int().min(0),
+  totalRuntimeMinutes: z.number().int().min(0),
+  totalRuntimeHours: z.number().min(0),
+  totalRuntimeFormatted: z.string(),
+  topGenres: z.array(groupGenreStatSchema),
+  lastWatchedAt: z.coerce.date().nullable(),
+});
+
+export const participantProfileSchema = z.object({
+  id: z.string().uuid('ID do participante deve ser um UUID válido'),
+  displayName: z.string(),
+  avatarUrl: z.string().url().nullable().optional(),
+});
+
+export const groupHistoryItemSchema = z.object({
+  session: groupWatchSessionSchema,
+  match: groupMovieMatchSchema,
+  movie: movieSchema,
+  participants: z.array(participantProfileSchema).optional(),
+});
+
+export const groupHistoryResultSchema = z.object({
+  groupId: z.string().uuid('ID do grupo deve ser um UUID válido'),
+  stats: groupStatsSchema,
+  history: z.array(groupHistoryItemSchema),
+  total: z.number().int().min(0),
+  page: z.number().int().min(1),
+  limit: z.number().int().min(1),
+  totalPages: z.number().int().min(0),
+});
+
+export type GetGroupHistoryQuery = z.infer<typeof getGroupHistoryQuerySchema>;
+export type GroupGenreStat = z.infer<typeof groupGenreStatSchema>;
+export type GroupStats = z.infer<typeof groupStatsSchema>;
+export type ParticipantProfile = z.infer<typeof participantProfileSchema>;
+export type GroupHistoryItem = z.infer<typeof groupHistoryItemSchema>;
+export type GroupHistoryResult = z.infer<typeof groupHistoryResultSchema>;
+
+
 

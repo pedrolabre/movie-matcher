@@ -1,6 +1,7 @@
 import { FastifyInstance, FastifyPluginAsync } from 'fastify';
 import {
   completeSessionBodySchema,
+  getGroupHistoryQuerySchema,
   groupIdParamsSchema,
   scheduleSessionDtoSchema,
   scheduleSessionParamsSchema,
@@ -63,6 +64,17 @@ export const sessionsRoutes: FastifyPluginAsync<SessionsRoutesOptions> = async (
       success: true,
       groupId,
       sessions,
+    });
+  });
+
+  fastify.get('/:groupId/history', async (request, reply) => {
+    const { groupId } = groupIdParamsSchema.parse(request.params);
+    const query = getGroupHistoryQuerySchema.parse(request.query);
+    const result = await sessionService.getGroupHistory(groupId, query);
+
+    return reply.status(200).send({
+      success: true,
+      ...result,
     });
   });
 };

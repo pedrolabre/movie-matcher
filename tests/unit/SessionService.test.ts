@@ -3,6 +3,7 @@ import { MatchStatus } from '../../src/core/domain/enums/MatchStatus.js';
 import { QuorumLevel } from '../../src/core/domain/enums/QuorumLevel.js';
 import { QuorumRule } from '../../src/core/domain/enums/QuorumRule.js';
 import {
+  formatRuntime,
   GroupNotFoundError,
   InvalidSessionStateError,
   MatchNotFoundError,
@@ -12,6 +13,8 @@ import {
 import { InMemoryGroupRepository } from '../../src/infrastructure/database/repositories/GroupRepository.js';
 import { InMemoryMatchRepository } from '../../src/infrastructure/database/repositories/MatchRepository.js';
 import { InMemorySessionRepository } from '../../src/infrastructure/database/repositories/SessionRepository.js';
+import { CatalogService } from '../../src/core/services/CatalogService.js';
+import { Movie } from '../../src/core/domain/entities/Movie.js';
 
 describe('SessionService Unit Tests', () => {
   let sessionRepo: InMemorySessionRepository;
@@ -254,6 +257,196 @@ describe('SessionService Unit Tests', () => {
     it('deve lançar GroupNotFoundError ao listar sessões de grupo inexistente', async () => {
       await expect(
         sessionService.getGroupSessions('00000000-0000-0000-0000-000000000000'),
+      ).rejects.toThrow(GroupNotFoundError);
+    });
+  });
+
+  describe('formatRuntime helper', () => {
+    it('deve formatar corretamente minutos em formato legível', () => {
+      expect(formatRuntime(0)).toBe('0m');
+      expect(formatRuntime(-10)).toBe('0m');
+      expect(formatRuntime(45)).toBe('45m');
+      expect(formatRuntime(60)).toBe('1h');
+      expect(formatRuntime(120)).toBe('2h');
+      expect(formatRuntime(145)).toBe('2h 25m');
+    });
+  });
+
+  describe('getGroupStats & getGroupHistory', () => {
+    let mockCatalogService: CatalogService;
+
+    const mockMovie1: Movie = {
+      tmdbId: 550,
+      title: 'Clube da Luta',
+      originalTitle: 'Fight Club',
+      overview: 'Um homem deprimido conhece um vendedor de sabão...',
+      posterPath: '/fightclub.jpg',
+      backdropPath: null,
+      releaseYear: 1999,
+      runtimeMinutes: 139,
+      voteAverage: 8.8,
+      genres: [
+        { id: 18, name: 'Drama' },
+        { id: 53, name: 'Thriller' },
+      ],
+      streamingProviders: [],
+      syncedAt: new Date(),
+    };
+
+    const mockMovie2: Movie = {
+      tmdbId: 700,
+      title: 'Pulp Fiction',
+      originalTitle: 'Pulp Fiction',
+      overview: 'Histórias de crime em Los Angeles...',
+      posterPath: '/pulpfiction.jpg',
+      backdropPath: null,
+      releaseYear: 1994,
+      runtimeMinutes: 154,
+      voteAverage: 8.9,
+      genres: [
+        { id: 80, name: 'Crime' },
+        { id: 53, name: 'Thriller' },
+      ],
+      streamingProviders: [],
+      syncedAt: new Date(),
+    };
+
+    beforeEach(() => {
+      mockCatalogService = {
+        getMovieDetails: async (tmdbId: number) => {
+          if (tmdbId === 550) return mockMovie1;
+          if (tmdbId === 700) return mockMovie2;
+          return null;
+        },
+      } as unknown as CatalogService;
+
+      sessionService = new SessionService(
+        sessionRepo,
+        matchRepo,
+        groupRepo,
+        mockCatalogService,
+      );
+    });
+
+    it('deve retornar estatísticas zeradas quando não houver sessões concluídas', async () => {
+      const stats = await sessionService.getGroupStats(validGroupId);
+
+      expect(stats.totalMoviesWatched).toBe(0);
+      expect(stats.totalRuntimeMinutes).toBe(0);
+      expect(stats.totalRuntimeHours).toBe(0);
+      expect(stats.totalRuntimeFormatted).toBe('0m');
+      expect(stats.topGenres).toEqual([]);
+      expect(stats.lastWatchedAt).toBeNull();
+    });
+
+    it('deve agregar minutos, horas e distribuição de gêneros para sessões concluídas', async () => {
+      // Cria e completa primeira sessão
+      const s1 = await sessionService.scheduleSession(
+        validGroupId,
+        validMatchId,
+        new Date('2026-02-01T20:00:00Z'),
+      );
+      await sessionService.completeSession(validGroupId, s1.session.id, ['u1', 'u2']);
+
+      // Cria e completa segunda sessão
+      const match2Id = 'match-3333-3333-3333-333333333333';
+      await matchRepo.upsertMatch({
+        id: match2Id,
+        groupId: validGroupId,
+        movieId: 700,
+        positiveVotesCount: 2,
+        quorumLevel: QuorumLevel.MINIMUM,
+        status: MatchStatus.ACTIVE,
+      });
+      const s2 = await sessionService.scheduleSession(
+        validGroupId,
+        match2Id,
+        new Date('2026-03-01T21:00:00Z'),
+      );
+      await sessionService.completeSession(validGroupId, s2.session.id, ['u1', 'u3']);
+
+      const stats = await sessionService.getGroupStats(validGroupId);
+
+      expect(stats.totalMoviesWatched).toBe(2);
+      expect(stats.totalRuntimeMinutes).toBe(139 + 154); // 293 min
+      expect(stats.totalRuntimeHours).toBe(4.9);
+      expect(stats.totalRuntimeFormatted).toBe('4h 53m');
+      expect(stats.topGenres).toHaveLength(3);
+      // Thriller aparece em ambos (count: 2)
+      expect(stats.topGenres[0]?.name).toBe('Thriller');
+      expect(stats.topGenres[0]?.count).toBe(2);
+      expect(stats.lastWatchedAt).toBeInstanceOf(Date);
+    });
+
+    it('não deve contabilizar sessões que estão apenas agendadas ou matches ativos', async () => {
+      await sessionService.scheduleSession(
+        validGroupId,
+        validMatchId,
+        new Date('2026-05-01T20:00:00Z'),
+      );
+
+      const stats = await sessionService.getGroupStats(validGroupId);
+      expect(stats.totalMoviesWatched).toBe(0);
+      expect(stats.totalRuntimeMinutes).toBe(0);
+    });
+
+    it('deve retornar histórico ordenado decrescente com paginação e busca', async () => {
+      // Conclui s1
+      const s1 = await sessionService.scheduleSession(
+        validGroupId,
+        validMatchId,
+        new Date('2026-01-10T20:00:00Z'),
+      );
+      await sessionService.completeSession(validGroupId, s1.session.id, ['user-1']);
+
+      // Conclui s2 mais recente
+      const match2Id = 'match-3333-3333-3333-333333333333';
+      await matchRepo.upsertMatch({
+        id: match2Id,
+        groupId: validGroupId,
+        movieId: 700,
+        positiveVotesCount: 2,
+        quorumLevel: QuorumLevel.MINIMUM,
+        status: MatchStatus.ACTIVE,
+      });
+      const s2 = await sessionService.scheduleSession(
+        validGroupId,
+        match2Id,
+        new Date('2026-02-15T21:00:00Z'),
+      );
+      await sessionService.completeSession(validGroupId, s2.session.id, ['user-2']);
+
+      const historyResult = await sessionService.getGroupHistory(validGroupId, {
+        page: 1,
+        limit: 10,
+      });
+
+      expect(historyResult.total).toBe(2);
+      expect(historyResult.history).toHaveLength(2);
+      expect(historyResult.totalPages).toBe(1);
+
+      // Mais recente primeiro (s2 -> Pulp Fiction)
+      expect(historyResult.history[0]?.movie.title).toBe('Pulp Fiction');
+      expect(historyResult.history[1]?.movie.title).toBe('Clube da Luta');
+
+      // Teste de busca por termo
+      const searchResult = await sessionService.getGroupHistory(validGroupId, {
+        searchTerm: 'clube',
+      });
+      expect(searchResult.total).toBe(1);
+      expect(searchResult.history[0]?.movie.title).toBe('Clube da Luta');
+
+      // Teste de filtro por gênero (Drama = 18)
+      const genreResult = await sessionService.getGroupHistory(validGroupId, {
+        genreId: 18,
+      });
+      expect(genreResult.total).toBe(1);
+      expect(genreResult.history[0]?.movie.title).toBe('Clube da Luta');
+    });
+
+    it('deve lançar GroupNotFoundError ao buscar histórico de grupo inexistente', async () => {
+      await expect(
+        sessionService.getGroupHistory('00000000-0000-0000-0000-000000000000'),
       ).rejects.toThrow(GroupNotFoundError);
     });
   });
