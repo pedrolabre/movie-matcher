@@ -109,6 +109,7 @@ export const groupWatchSessionSchema = z.object({
   scheduledAt: z.coerce.date().nullable().optional(),
   notes: z.string().trim().max(1000).nullable().optional(),
   completedAt: z.coerce.date().nullable().optional(),
+  participantIds: z.array(z.string().uuid()).nullable().optional(),
   createdAt: z.coerce.date(),
 });
 
@@ -217,5 +218,26 @@ export type JoinGroupByInviteCodeBody = z.infer<typeof joinGroupByInviteCodeBody
 export type GroupIdParams = z.infer<typeof groupIdParamsSchema>;
 export type GetGroupMatchesQuery = z.infer<typeof getGroupMatchesQuerySchema>;
 export type GetGroupEventsQuery = z.infer<typeof getGroupEventsQuerySchema>;
+
+export const scheduleSessionParamsSchema = z.object({
+  groupId: z.string().uuid('ID do grupo deve ser um UUID válido'),
+  matchId: z.string().uuid('ID do match deve ser um UUID válido'),
+});
+
+export const sessionIdParamsSchema = z.object({
+  groupId: z.string().uuid('ID do grupo deve ser um UUID válido'),
+  sessionId: z.string().uuid('ID da sessão deve ser um UUID válido'),
+});
+
+export const completeSessionBodySchema = z.object({
+  participantIds: z
+    .array(z.string().uuid('ID do participante deve ser um UUID válido'))
+    .optional(),
+  completedAt: z.coerce.date().optional(),
+});
+
+export type ScheduleSessionParams = z.infer<typeof scheduleSessionParamsSchema>;
+export type SessionIdParams = z.infer<typeof sessionIdParamsSchema>;
+export type CompleteSessionBody = z.infer<typeof completeSessionBodySchema>;
 
 

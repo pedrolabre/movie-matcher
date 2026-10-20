@@ -418,7 +418,7 @@ export const ConsensualMatchCard: React.FC<ConsensualMatchCardProps> = ({
                 }}
               >
                 <span>📅</span>
-                <span>Agendar</span>
+                <span>{rawMatch.status === MatchStatus.SCHEDULED ? 'Reagendar' : 'Agendar'}</span>
               </button>
             )}
 
@@ -445,7 +445,7 @@ export const ConsensualMatchCard: React.FC<ConsensualMatchCardProps> = ({
                 }}
               >
                 <span>▶</span>
-                <span>Vamos Assistir</span>
+                <span>{rawMatch.status === MatchStatus.SCHEDULED ? 'Marcar Assistido' : 'Vamos Assistir'}</span>
               </button>
             )}
           </div>

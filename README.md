@@ -21,6 +21,7 @@ movie-matcher/
 │   │   │   ├── groups.routes.ts
 │   │   │   ├── movies.routes.ts
 │   │   │   ├── preferences.routes.ts
+│   │   │   ├── sessions.routes.ts
 │   │   │   └── users.routes.ts
 │   │   └── server.ts
 │   ├── core/
@@ -47,7 +48,8 @@ movie-matcher/
 │   │   │   ├── CatalogService.ts
 │   │   │   ├── GroupService.ts
 │   │   │   ├── MatchIntersectionEngine.ts
-│   │   │   └── PreferenceService.ts
+│   │   │   ├── PreferenceService.ts
+│   │   │   └── SessionService.ts
 │   │   └── utils/
 │   │       └── inviteCode.ts
 │   ├── infrastructure/
@@ -58,7 +60,8 @@ movie-matcher/
 │   │   │   └── repositories/
 │   │   │       ├── GroupRepository.ts
 │   │   │       ├── MatchRepository.ts
-│   │   │       └── PreferenceRepository.ts
+│   │   │       ├── PreferenceRepository.ts
+│   │   │       └── SessionRepository.ts
 │   │   ├── events/
 │   │   │   └── MatchEventEmitter.ts
 │   │   ├── notifications/
@@ -81,6 +84,8 @@ movie-matcher/
 │       │   │   └── useSwipeGesture.ts
 │       │   └── Watchlist/
 │       │       └── MovieGridCard.tsx
+│       ├── modals/
+│       │   └── ScheduleSessionModal.tsx
 │       ├── screens/
 │       │   ├── GroupListScreen.tsx
 │       │   ├── GroupWatchlistScreen.tsx
@@ -95,6 +100,7 @@ movie-matcher/
 │   │   ├── matchIntersection.test.ts
 │   │   ├── moviesRoutes.test.ts
 │   │   ├── preferencesRoutes.test.ts
+│   │   ├── sessionsRoutes.test.ts
 │   │   └── userLists.test.ts
 │   └── unit/
 │       ├── CatalogService.test.ts
@@ -113,6 +119,8 @@ movie-matcher/
 │       ├── PreferenceService.test.ts
 │       ├── PushNotificationService.test.ts
 │       ├── QuorumEvaluator.test.ts
+│       ├── ScheduleSessionModal.test.ts
+│       ├── SessionService.test.ts
 │       ├── TmdbClient.test.ts
 │       ├── useDeckStore.test.ts
 │       └── VoterAvatarStack.test.ts

@@ -8,6 +8,10 @@ import {
   InMemoryMatchRepository,
   MatchRepository,
 } from '../infrastructure/database/repositories/MatchRepository.js';
+import {
+  InMemorySessionRepository,
+  SessionRepository,
+} from '../infrastructure/database/repositories/SessionRepository.js';
 import { InMemoryPreferenceRepository } from '../infrastructure/database/repositories/PreferenceRepository.js';
 import {
   InMemoryMatchEventEmitter,
@@ -15,17 +19,21 @@ import {
 } from '../infrastructure/events/MatchEventEmitter.js';
 import { PushNotificationService } from '../infrastructure/notifications/PushNotificationService.js';
 import { TmdbApiError, TmdbRateLimitError } from '../infrastructure/tmdb/types.js';
+import { SessionService } from '../core/services/SessionService.js';
 import { moviesRoutes } from './routes/movies.routes.js';
 import { preferencesRoutes } from './routes/preferences.routes.js';
 import { usersRoutes } from './routes/users.routes.js';
 import { groupsRoutes } from './routes/groups.routes.js';
 import { eventsRoutes } from './routes/events.routes.js';
+import { sessionsRoutes } from './routes/sessions.routes.js';
 
 export interface BuildAppOptions extends FastifyServerOptions {
   catalogService?: CatalogService;
   preferenceService?: PreferenceService;
   groupService?: GroupService;
   matchRepository?: MatchRepository;
+  sessionRepository?: SessionRepository;
+  sessionService?: SessionService;
   matchIntersectionEngine?: MatchIntersectionEngine;
   matchEventBus?: MatchEventBus;
   notificationService?: PushNotificationService;
@@ -38,6 +46,15 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
   const matchEventBus = options.matchEventBus ?? new InMemoryMatchEventEmitter();
   const notificationService =
     options.notificationService ?? new PushNotificationService();
+  const sessionRepository =
+    options.sessionRepository ?? new InMemorySessionRepository();
+  const sessionService =
+    options.sessionService ??
+    new SessionService(
+      sessionRepository,
+      matchRepository,
+      groupService.getRepository(),
+    );
 
   let preferenceService = options.preferenceService;
   let matchIntersectionEngine = options.matchIntersectionEngine;
@@ -82,9 +99,11 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
     preferenceService: __,
     groupService: ___,
     matchRepository: ____,
-    matchIntersectionEngine: _____,
-    matchEventBus: ______,
-    notificationService: _______,
+    sessionRepository: _____,
+    sessionService: ______,
+    matchIntersectionEngine: _______,
+    matchEventBus: ________,
+    notificationService: _________,
     ...fastifyOptions
   } = options;
 
@@ -168,6 +187,11 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
     prefix: '/api/groups',
     groupService,
     eventBus: matchEventBus,
+  });
+
+  app.register(sessionsRoutes, {
+    prefix: '/api/groups',
+    sessionService,
   });
 
   return app;

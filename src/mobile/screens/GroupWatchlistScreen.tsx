@@ -6,6 +6,7 @@ import {
   ConsensualMatchCard,
   EnrichedGroupMatch,
 } from '../components/MatchList/ConsensualMatchCard.js';
+import { ScheduleSessionModal } from '../modals/ScheduleSessionModal.js';
 
 export interface GroupWatchlistScreenProps {
   readonly group: Group;
@@ -16,6 +17,7 @@ export interface GroupWatchlistScreenProps {
   readonly errorMessage?: string | null | undefined;
   readonly onRefresh?: (() => void | Promise<void>) | undefined;
   readonly onScheduleMatch?: ((match: EnrichedGroupMatch) => void) | undefined;
+  readonly onScheduleSessionConfirm?: ((match: EnrichedGroupMatch, data: { scheduledAt: Date; notes?: string | undefined }) => void | Promise<void>) | undefined;
   readonly onWatchNowMatch?: ((match: EnrichedGroupMatch) => void) | undefined;
   readonly onSelectMatch?: ((match: EnrichedGroupMatch) => void) | undefined;
   readonly onBack?: (() => void) | undefined;
@@ -146,6 +148,7 @@ export const GroupWatchlistScreen: React.FC<GroupWatchlistScreenProps> = ({
   errorMessage = null,
   onRefresh,
   onScheduleMatch,
+  onScheduleSessionConfirm,
   onWatchNowMatch,
   onSelectMatch,
   onBack,
@@ -156,6 +159,8 @@ export const GroupWatchlistScreen: React.FC<GroupWatchlistScreenProps> = ({
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [sortBy, setSortBy] = useState<MatchSortOrder>('recent');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [schedulingMatch, setSchedulingMatch] = useState<EnrichedGroupMatch | null>(null);
+  const [isScheduling, setIsScheduling] = useState<boolean>(false);
 
   const counts = useMemo(() => countMatchesByStatus(matches), [matches]);
 
@@ -173,8 +178,23 @@ export const GroupWatchlistScreen: React.FC<GroupWatchlistScreenProps> = ({
   );
 
   const handleSchedule = (match: EnrichedGroupMatch) => {
+    setSchedulingMatch(match);
     setToastMessage(`Sessão agendada para "${match.movie.title}"!`);
     onScheduleMatch?.(match);
+  };
+
+  const handleConfirmSchedule = async (data: { scheduledAt: Date; notes?: string | undefined }) => {
+    if (!schedulingMatch) return;
+    setIsScheduling(true);
+    try {
+      if (onScheduleSessionConfirm) {
+        await onScheduleSessionConfirm(schedulingMatch, data);
+      }
+      setToastMessage(`Sessão agendada para "${schedulingMatch.movie.title}"!`);
+      setSchedulingMatch(null);
+    } finally {
+      setIsScheduling(false);
+    }
   };
 
   const handleWatchNow = (match: EnrichedGroupMatch) => {
@@ -710,6 +730,14 @@ export const GroupWatchlistScreen: React.FC<GroupWatchlistScreenProps> = ({
           </p>
         </div>
       )}
+
+      <ScheduleSessionModal
+        isOpen={Boolean(schedulingMatch)}
+        match={schedulingMatch}
+        onClose={() => setSchedulingMatch(null)}
+        onConfirm={handleConfirmSchedule}
+        isLoading={isScheduling}
+      />
     </div>
   );
 };
