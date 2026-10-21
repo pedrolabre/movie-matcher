@@ -26,6 +26,7 @@ beforeAll(() => {
       useMemo: (factory: any) => factory(),
       useCallback: (fn: any) => fn,
       useEffect: () => {},
+      useRef: (initial: any) => ({ current: initial }),
     };
   }
 });
@@ -318,6 +319,22 @@ describe('GroupWatchlistScreen Component and Helpers', () => {
       expect(element).toBeDefined();
       expect(element.props.selectedProviderId).toBe(8);
       expect(element.props.onSelectProvider).toBe(onSelectProvider);
+    });
+
+    it('deve suportar acionamento da roleta de desempate e repassar callback onOpenRoulette', () => {
+      const onOpenRoulette = vi.fn();
+      const onRouletteSpinConfirm = vi.fn();
+
+      const element = React.createElement(GroupWatchlistScreen, {
+        group: mockGroup,
+        matches: mockMatches,
+        onOpenRoulette,
+        onRouletteSpinConfirm,
+      });
+
+      expect(element).toBeDefined();
+      expect(element.props.onOpenRoulette).toBe(onOpenRoulette);
+      expect(element.props.onRouletteSpinConfirm).toBe(onRouletteSpinConfirm);
     });
   });
 });

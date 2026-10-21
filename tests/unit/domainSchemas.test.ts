@@ -24,6 +24,8 @@ import {
   getMovieProvidersQuerySchema,
   normalizedStreamingProviderSchema,
   movieWatchProvidersResultSchema,
+  rouletteRequestBodySchema,
+  rouletteResultSchema,
 } from '../../src/core/domain/types/schemas.js';
 
 describe('Domain Enums and Schemas', () => {
@@ -369,6 +371,82 @@ describe('Domain Enums and Schemas', () => {
       expect(parsed.movieId).toBe(550);
       expect(parsed.flatrate).toHaveLength(1);
       expect(parsed.link).toBe('https://tmdb.org/watch/550');
+    });
+  });
+
+  describe('Roulette Schemas', () => {
+    it('deve validar rouletteRequestBodySchema com valores default', () => {
+      const parsed = rouletteRequestBodySchema.parse({});
+      expect(parsed.mode).toBe('uniform');
+      expect(parsed.candidateMatchIds).toBeUndefined();
+    });
+
+    it('deve validar rouletteRequestBodySchema com candidateMatchIds e filtros', () => {
+      const valid = {
+        candidateMatchIds: [
+          'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+          'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22',
+        ],
+        mode: 'weighted' as const,
+        genreId: 28,
+        providerId: 8,
+      };
+
+      const parsed = rouletteRequestBodySchema.parse(valid);
+      expect(parsed.candidateMatchIds).toHaveLength(2);
+      expect(parsed.mode).toBe('weighted');
+      expect(parsed.genreId).toBe(28);
+      expect(parsed.providerId).toBe(8);
+    });
+
+    it('deve rejeitar rouletteRequestBodySchema com candidateMatchIds vazio ou inválido', () => {
+      expect(() =>
+        rouletteRequestBodySchema.parse({ candidateMatchIds: [] }),
+      ).toThrow();
+      expect(() =>
+        rouletteRequestBodySchema.parse({ candidateMatchIds: ['not-a-uuid'] }),
+      ).toThrow();
+    });
+
+    it('deve validar rouletteResultSchema', () => {
+      const validResult = {
+        success: true as const,
+        groupId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+        selectedMatch: {
+          id: 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22',
+          groupId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+          movieId: 550,
+          positiveVotesCount: 3,
+          quorumLevel: QuorumLevel.PERFECT,
+          status: MatchStatus.ACTIVE,
+          matchedAt: new Date(),
+          updatedAt: new Date(),
+        },
+        movie: {
+          id: 550,
+          tmdbId: 550,
+          title: 'Fight Club',
+          overview: 'An insomniac office worker...',
+          posterPath: '/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg',
+          backdropPath: '/hZkgoQYus5vegHoetLkCJzb17zJ.jpg',
+          releaseDate: '1999-10-15',
+          releaseYear: 1999,
+          voteAverage: 8.4,
+          runtimeMinutes: 139,
+          genres: [{ id: 18, name: 'Drama' }],
+          streamingProviders: [],
+          syncedAt: new Date(),
+        },
+        selectedIndex: 0,
+        totalCandidates: 3,
+        mode: 'uniform' as const,
+        selectionProbability: 0.3333,
+      };
+
+      const parsed = rouletteResultSchema.parse(validResult);
+      expect(parsed.success).toBe(true);
+      expect(parsed.selectedIndex).toBe(0);
+      expect(parsed.selectionProbability).toBeCloseTo(0.3333, 4);
     });
   });
 });

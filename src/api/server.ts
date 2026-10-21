@@ -26,6 +26,7 @@ import { usersRoutes } from './routes/users.routes.js';
 import { groupsRoutes } from './routes/groups.routes.js';
 import { eventsRoutes } from './routes/events.routes.js';
 import { sessionsRoutes } from './routes/sessions.routes.js';
+import { rouletteRoutes } from './routes/roulette.routes.js';
 
 export interface BuildAppOptions extends FastifyServerOptions {
   catalogService?: CatalogService;
@@ -194,6 +195,14 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
     prefix: '/api/groups',
     sessionService,
   });
+
+  if (matchIntersectionEngine) {
+    app.register(rouletteRoutes, {
+      prefix: '/api/groups',
+      groupService,
+      matchIntersectionEngine,
+    });
+  }
 
   return app;
 }

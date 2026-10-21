@@ -9,6 +9,7 @@ import {
 } from '../components/MatchList/ConsensualMatchCard.js';
 import { getProviderBrandColor } from '../components/StreamingBadgeList.js';
 import { ScheduleSessionModal } from '../modals/ScheduleSessionModal.js';
+import { RouletteModal } from '../modals/RouletteModal.js';
 
 export interface GroupWatchlistScreenProps {
   readonly group: Group;
@@ -24,6 +25,8 @@ export interface GroupWatchlistScreenProps {
   readonly onSelectMatch?: ((match: EnrichedGroupMatch) => void) | undefined;
   readonly selectedProviderId?: number | null | undefined;
   readonly onSelectProvider?: ((providerId: number | null) => void) | undefined;
+  readonly onOpenRoulette?: (() => void) | undefined;
+  readonly onRouletteSpinConfirm?: ((match: EnrichedGroupMatch) => void | Promise<void>) | undefined;
   readonly onBack?: (() => void) | undefined;
   readonly style?: React.CSSProperties | undefined;
   readonly testId?: string | undefined;
@@ -189,6 +192,8 @@ export const GroupWatchlistScreen: React.FC<GroupWatchlistScreenProps> = ({
   onSelectMatch,
   selectedProviderId: initialProviderId = null,
   onSelectProvider,
+  onOpenRoulette,
+  onRouletteSpinConfirm,
   onBack,
   style,
   testId = 'group-watchlist-screen',
@@ -200,6 +205,7 @@ export const GroupWatchlistScreen: React.FC<GroupWatchlistScreenProps> = ({
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [schedulingMatch, setSchedulingMatch] = useState<EnrichedGroupMatch | null>(null);
   const [isScheduling, setIsScheduling] = useState<boolean>(false);
+  const [isRouletteOpen, setIsRouletteOpen] = useState<boolean>(false);
 
   const counts = useMemo(() => countMatchesByStatus(matches), [matches]);
   const availableProviders = useMemo(
@@ -362,30 +368,62 @@ export const GroupWatchlistScreen: React.FC<GroupWatchlistScreenProps> = ({
             </div>
           </div>
 
-          {onRefresh && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <button
               type="button"
-              data-testid="watchlist-refresh-button"
-              onClick={() => onRefresh()}
-              aria-label="Atualizar matches"
+              data-testid="watchlist-roulette-button"
+              onClick={() => {
+                setIsRouletteOpen(true);
+                onOpenRoulette?.();
+              }}
+              disabled={counts.ACTIVE === 0}
+              aria-label="Abrir roleta de desempate"
               style={{
-                backgroundColor: '#1e293b',
-                border: '1px solid #334155',
-                color: '#cbd5e1',
+                backgroundColor: counts.ACTIVE > 0 ? '#8b5cf6' : '#334155',
+                border: '1px solid #7c3aed',
+                color: '#ffffff',
                 padding: '8px 12px',
                 borderRadius: 10,
                 fontSize: 13,
                 fontWeight: 600,
-                cursor: 'pointer',
+                cursor: counts.ACTIVE > 0 ? 'pointer' : 'not-allowed',
                 display: 'flex',
                 alignItems: 'center',
                 gap: 6,
+                opacity: counts.ACTIVE > 0 ? 1 : 0.5,
+                boxShadow:
+                  counts.ACTIVE > 0 ? '0 4px 10px rgba(139, 92, 246, 0.3)' : 'none',
               }}
             >
-              <span>↻</span>
-              <span>Atualizar</span>
+              <span>🎲</span>
+              <span>Roleta</span>
             </button>
-          )}
+
+            {onRefresh && (
+              <button
+                type="button"
+                data-testid="watchlist-refresh-button"
+                onClick={() => onRefresh()}
+                aria-label="Atualizar matches"
+                style={{
+                  backgroundColor: '#1e293b',
+                  border: '1px solid #334155',
+                  color: '#cbd5e1',
+                  padding: '8px 12px',
+                  borderRadius: 10,
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                <span>↻</span>
+                <span>Atualizar</span>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Contador Geral de Matches Consensuais */}
@@ -909,6 +947,20 @@ export const GroupWatchlistScreen: React.FC<GroupWatchlistScreenProps> = ({
         onClose={() => setSchedulingMatch(null)}
         onConfirm={handleConfirmSchedule}
         isLoading={isScheduling}
+      />
+
+      <RouletteModal
+        isOpen={isRouletteOpen}
+        matches={matches}
+        groupName={group.name}
+        onClose={() => setIsRouletteOpen(false)}
+        onConfirmMovie={(match) => {
+          handleWatchNow(match);
+          onRouletteSpinConfirm?.(match);
+        }}
+        onScheduleMovie={(match) => {
+          handleSchedule(match);
+        }}
       />
     </div>
   );

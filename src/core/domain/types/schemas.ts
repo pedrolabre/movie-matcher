@@ -331,5 +331,33 @@ export interface MovieWatchProvidersResult {
   readonly link?: string | null | undefined;
 }
 
+export const rouletteModeSchema = z.enum(['uniform', 'weighted']);
+
+export const rouletteRequestBodySchema = z.object({
+  candidateMatchIds: z
+    .array(z.string().uuid('ID de match candidato deve ser um UUID válido'))
+    .min(1, 'A lista de matches candidatos deve conter ao menos 1 item')
+    .optional(),
+  mode: rouletteModeSchema.default('uniform'),
+  genreId: z.coerce.number().int().positive().optional(),
+  providerId: z.coerce.number().int().positive().optional(),
+});
+
+export const rouletteResultSchema = z.object({
+  success: z.literal(true),
+  groupId: z.string().uuid('ID do grupo deve ser um UUID válido'),
+  selectedMatch: groupMovieMatchSchema,
+  movie: movieSchema,
+  selectedIndex: z.number().int().nonnegative(),
+  totalCandidates: z.number().int().positive(),
+  mode: rouletteModeSchema,
+  selectionProbability: z.number().min(0).max(1),
+});
+
+export type RouletteMode = z.infer<typeof rouletteModeSchema>;
+export type RouletteRequestBody = z.infer<typeof rouletteRequestBodySchema>;
+export type RouletteResult = z.infer<typeof rouletteResultSchema>;
+
+
 
 

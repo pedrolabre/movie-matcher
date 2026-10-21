@@ -21,11 +21,13 @@ movie-matcher/
 │   │   │   ├── groups.routes.ts
 │   │   │   ├── movies.routes.ts
 │   │   │   ├── preferences.routes.ts
+│   │   │   ├── roulette.routes.ts
 │   │   │   ├── sessions.routes.ts
 │   │   │   └── users.routes.ts
 │   │   └── server.ts
 │   ├── core/
 │   │   ├── algorithms/
+│   │   │   ├── FairRandomPicker.ts
 │   │   │   └── QuorumEvaluator.ts
 │   │   ├── domain/
 │   │   │   ├── entities/
@@ -88,6 +90,7 @@ movie-matcher/
 │       │   ├── GroupStatsHeader.tsx
 │       │   └── StreamingBadgeList.tsx
 │       ├── modals/
+│       │   ├── RouletteModal.tsx
 │       │   └── ScheduleSessionModal.tsx
 │       ├── screens/
 │       │   ├── GroupHistoryScreen.tsx
@@ -105,6 +108,7 @@ movie-matcher/
 │   │   ├── matchIntersection.test.ts
 │   │   ├── moviesRoutes.test.ts
 │   │   ├── preferencesRoutes.test.ts
+│   │   ├── rouletteRoutes.test.ts
 │   │   ├── sessionsRoutes.test.ts
 │   │   ├── streamingProviders.test.ts
 │   │   └── userLists.test.ts
@@ -112,6 +116,7 @@ movie-matcher/
 │       ├── CatalogService.test.ts
 │       ├── ConsensualMatchCard.test.ts
 │       ├── domainSchemas.test.ts
+│       ├── FairRandomPicker.test.ts
 │       ├── GroupCard.test.ts
 │       ├── GroupHistoryScreen.test.ts
 │       ├── GroupListScreen.test.ts
@@ -127,6 +132,7 @@ movie-matcher/
 │       ├── PreferenceService.test.ts
 │       ├── PushNotificationService.test.ts
 │       ├── QuorumEvaluator.test.ts
+│       ├── RouletteModal.test.ts
 │       ├── ScheduleSessionModal.test.ts
 │       ├── SessionService.test.ts
 │       ├── StreamingBadgeList.test.ts
