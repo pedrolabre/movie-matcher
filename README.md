@@ -70,7 +70,8 @@ movie-matcher/
 │   │       ├── mappers/
 │   │       │   └── MovieMapper.ts
 │   │       ├── TmdbClient.ts
-│   │       └── types.ts
+│   │       ├── types.ts
+│   │       └── WatchProvidersService.ts
 │   └── mobile/
 │       ├── components/
 │       │   ├── Group/
@@ -84,7 +85,8 @@ movie-matcher/
 │       │   │   └── useSwipeGesture.ts
 │       │   ├── Watchlist/
 │       │   │   └── MovieGridCard.tsx
-│       │   └── GroupStatsHeader.tsx
+│       │   ├── GroupStatsHeader.tsx
+│       │   └── StreamingBadgeList.tsx
 │       ├── modals/
 │       │   └── ScheduleSessionModal.tsx
 │       ├── screens/
@@ -104,6 +106,7 @@ movie-matcher/
 │   │   ├── moviesRoutes.test.ts
 │   │   ├── preferencesRoutes.test.ts
 │   │   ├── sessionsRoutes.test.ts
+│   │   ├── streamingProviders.test.ts
 │   │   └── userLists.test.ts
 │   └── unit/
 │       ├── CatalogService.test.ts
@@ -126,8 +129,10 @@ movie-matcher/
 │       ├── QuorumEvaluator.test.ts
 │       ├── ScheduleSessionModal.test.ts
 │       ├── SessionService.test.ts
+│       ├── StreamingBadgeList.test.ts
 │       ├── TmdbClient.test.ts
 │       ├── useDeckStore.test.ts
-│       └── VoterAvatarStack.test.ts
+│       ├── VoterAvatarStack.test.ts
+│       └── WatchProvidersService.test.ts
 └── README.md
 ```

@@ -1,11 +1,13 @@
 import React, { useMemo, useState } from 'react';
 import { Group } from '../../core/domain/entities/Group.js';
+import { StreamingProvider } from '../../core/domain/entities/Movie.js';
 import { MatchStatus } from '../../core/domain/enums/MatchStatus.js';
 import { QuorumRule } from '../../core/domain/enums/QuorumRule.js';
 import {
   ConsensualMatchCard,
   EnrichedGroupMatch,
 } from '../components/MatchList/ConsensualMatchCard.js';
+import { getProviderBrandColor } from '../components/StreamingBadgeList.js';
 import { ScheduleSessionModal } from '../modals/ScheduleSessionModal.js';
 
 export interface GroupWatchlistScreenProps {
@@ -20,6 +22,8 @@ export interface GroupWatchlistScreenProps {
   readonly onScheduleSessionConfirm?: ((match: EnrichedGroupMatch, data: { scheduledAt: Date; notes?: string | undefined }) => void | Promise<void>) | undefined;
   readonly onWatchNowMatch?: ((match: EnrichedGroupMatch) => void) | undefined;
   readonly onSelectMatch?: ((match: EnrichedGroupMatch) => void) | undefined;
+  readonly selectedProviderId?: number | null | undefined;
+  readonly onSelectProvider?: ((providerId: number | null) => void) | undefined;
   readonly onBack?: (() => void) | undefined;
   readonly style?: React.CSSProperties | undefined;
   readonly testId?: string | undefined;
@@ -32,13 +36,35 @@ export interface MatchFilters {
   readonly statusTab?: MatchStatusTab | undefined;
   readonly searchTerm?: string | undefined;
   readonly genreId?: number | undefined;
+  readonly providerId?: number | undefined;
+}
+
+export function extractStreamingProvidersFromMatches(
+  matches: readonly EnrichedGroupMatch[],
+): readonly StreamingProvider[] {
+  const map = new Map<number, StreamingProvider>();
+  for (const item of matches) {
+    for (const provider of item.movie.streamingProviders) {
+      if (!map.has(provider.providerId)) {
+        map.set(provider.providerId, provider);
+      }
+    }
+  }
+  return Array.from(map.values()).sort((a, b) => {
+    const priorityA = a.displayPriority ?? 99;
+    const priorityB = b.displayPriority ?? 99;
+    if (priorityA !== priorityB) {
+      return priorityA - priorityB;
+    }
+    return a.providerName.localeCompare(b.providerName);
+  });
 }
 
 export function filterGroupMatches(
   matches: readonly EnrichedGroupMatch[],
   filters: MatchFilters,
 ): readonly EnrichedGroupMatch[] {
-  const { statusTab = MatchStatus.ACTIVE, searchTerm, genreId } = filters;
+  const { statusTab = MatchStatus.ACTIVE, searchTerm, genreId, providerId } = filters;
 
   return matches.filter((item) => {
     // 1. Filtro por Aba de Status
@@ -70,6 +96,16 @@ export function filterGroupMatches(
     if (typeof genreId === 'number') {
       const hasGenre = item.movie.genres.some((genre) => genre.id === genreId);
       if (!hasGenre) {
+        return false;
+      }
+    }
+
+    // 4. Filtro por Provedor de Streaming
+    if (typeof providerId === 'number' && providerId > 0) {
+      const hasProvider = item.movie.streamingProviders.some(
+        (provider) => provider.providerId === providerId,
+      );
+      if (!hasProvider) {
         return false;
       }
     }
@@ -151,26 +187,40 @@ export const GroupWatchlistScreen: React.FC<GroupWatchlistScreenProps> = ({
   onScheduleSessionConfirm,
   onWatchNowMatch,
   onSelectMatch,
+  selectedProviderId: initialProviderId = null,
+  onSelectProvider,
   onBack,
   style,
   testId = 'group-watchlist-screen',
 }) => {
   const [activeTab, setActiveTab] = useState<MatchStatusTab>(MatchStatus.ACTIVE);
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [selectedProviderId, setSelectedProviderId] = useState<number | null>(initialProviderId);
   const [sortBy, setSortBy] = useState<MatchSortOrder>('recent');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [schedulingMatch, setSchedulingMatch] = useState<EnrichedGroupMatch | null>(null);
   const [isScheduling, setIsScheduling] = useState<boolean>(false);
 
   const counts = useMemo(() => countMatchesByStatus(matches), [matches]);
+  const availableProviders = useMemo(
+    () => extractStreamingProvidersFromMatches(matches),
+    [matches],
+  );
 
   const filteredMatches = useMemo(() => {
     const filtered = filterGroupMatches(matches, {
       statusTab: activeTab,
       searchTerm,
+      providerId: selectedProviderId ?? undefined,
     });
     return sortGroupMatches(filtered, sortBy);
-  }, [matches, activeTab, searchTerm, sortBy]);
+  }, [matches, activeTab, searchTerm, selectedProviderId, sortBy]);
+
+  const handleToggleProvider = (providerId: number | null) => {
+    const next = selectedProviderId === providerId ? null : providerId;
+    setSelectedProviderId(next);
+    onSelectProvider?.(next);
+  };
 
   const quorumDescription = formatQuorumRuleText(
     group.thresholdRule,
@@ -584,6 +634,122 @@ export const GroupWatchlistScreen: React.FC<GroupWatchlistScreenProps> = ({
         )}
       </div>
 
+      {/* Filtro Interativo por Provedor de Streaming */}
+      {availableProviders.length > 0 && (
+        <div
+          data-testid="watchlist-streaming-filters"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            marginBottom: 20,
+            overflowX: 'auto',
+            paddingBottom: 4,
+          }}
+        >
+          <span
+            style={{
+              fontSize: 12,
+              fontWeight: 600,
+              color: '#94a3b8',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            Streaming:
+          </span>
+
+          <button
+            type="button"
+            data-testid="streaming-filter-all"
+            onClick={() => handleToggleProvider(null)}
+            style={{
+              padding: '6px 12px',
+              borderRadius: 16,
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: 'pointer',
+              border: selectedProviderId === null ? 'none' : '1px solid #334155',
+              backgroundColor:
+                selectedProviderId === null ? '#3b82f6' : '#1e293b',
+              color: selectedProviderId === null ? '#ffffff' : '#94a3b8',
+              whiteSpace: 'nowrap',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            Todos
+          </button>
+
+          {availableProviders.map((provider) => {
+            const isSelected = selectedProviderId === provider.providerId;
+            const count = matches.filter((m) =>
+              m.movie.streamingProviders.some((p) => p.providerId === provider.providerId),
+            ).length;
+            const brandColor = getProviderBrandColor(provider);
+
+            return (
+              <button
+                key={provider.providerId}
+                type="button"
+                data-testid={`streaming-filter-${provider.providerId}`}
+                data-selected={isSelected}
+                onClick={() => handleToggleProvider(provider.providerId)}
+                style={{
+                  padding: '5px 10px',
+                  borderRadius: 16,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  border: isSelected
+                    ? `2px solid ${brandColor || '#3b82f6'}`
+                    : '1px solid #334155',
+                  backgroundColor: isSelected ? 'rgba(59, 130, 246, 0.2)' : '#1e293b',
+                  color: isSelected ? '#ffffff' : '#cbd5e1',
+                  whiteSpace: 'nowrap',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                {provider.logoPath ? (
+                  <img
+                    src={provider.logoPath}
+                    alt={provider.providerName}
+                    style={{
+                      width: 16,
+                      height: 16,
+                      borderRadius: 4,
+                      objectFit: 'cover',
+                    }}
+                  />
+                ) : (
+                  <span
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      backgroundColor: brandColor,
+                    }}
+                  />
+                )}
+                <span>{provider.providerName}</span>
+                <span
+                  style={{
+                    fontSize: 10,
+                    opacity: 0.75,
+                    padding: '1px 5px',
+                    borderRadius: 8,
+                    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+                  }}
+                >
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {/* Feedback de Carregamento */}
       {isLoading && (
         <div
@@ -694,21 +860,25 @@ export const GroupWatchlistScreen: React.FC<GroupWatchlistScreenProps> = ({
           <span style={{ fontSize: 40 }}>
             {searchTerm.length > 0
               ? '🔍'
-              : activeTab === MatchStatus.SCHEDULED
-                ? '📅'
-                : activeTab === MatchStatus.WATCHED
-                  ? '🎬'
-                  : '🤝'}
+              : selectedProviderId !== null
+                ? '📺'
+                : activeTab === MatchStatus.SCHEDULED
+                  ? '📅'
+                  : activeTab === MatchStatus.WATCHED
+                    ? '🎬'
+                    : '🤝'}
           </span>
 
           <h3 style={{ margin: 0, fontSize: 18, color: '#f8fafc' }}>
             {searchTerm.length > 0
               ? 'Nenhum filme encontrado'
-              : activeTab === MatchStatus.SCHEDULED
-                ? 'Nenhuma sessão agendada'
-                : activeTab === MatchStatus.WATCHED
-                  ? 'Nenhum filme assistido ainda'
-                  : 'Nenhum match ativo no momento'}
+              : selectedProviderId !== null
+                ? 'Nenhum filme disponível neste streaming'
+                : activeTab === MatchStatus.SCHEDULED
+                  ? 'Nenhuma sessão agendada'
+                  : activeTab === MatchStatus.WATCHED
+                    ? 'Nenhum filme assistido ainda'
+                    : 'Nenhum match ativo no momento'}
           </h3>
 
           <p
@@ -722,11 +892,13 @@ export const GroupWatchlistScreen: React.FC<GroupWatchlistScreenProps> = ({
           >
             {searchTerm.length > 0
               ? `Não encontramos nenhum título correspondente a "${searchTerm}". Tente outro termo de busca.`
-              : activeTab === MatchStatus.SCHEDULED
-                ? 'Quando o grupo marcar uma data para assistir a um filme, ele aparecerá aqui.'
-                : activeTab === MatchStatus.WATCHED
-                  ? 'Os filmes que vocês assistirem juntos serão guardados aqui no histórico compartilhado.'
-                  : 'Nenhum filme atingiu o quórum necessário ainda. Convide os membros a darem mais swipes para gerar combinações!'}
+              : selectedProviderId !== null
+                ? 'Não encontramos nenhum filme combinado disponível no serviço de streaming selecionado.'
+                : activeTab === MatchStatus.SCHEDULED
+                  ? 'Quando o grupo marcar uma data para assistir a um filme, ele aparecerá aqui.'
+                  : activeTab === MatchStatus.WATCHED
+                    ? 'Os filmes que vocês assistirem juntos serão guardados aqui no histórico compartilhado.'
+                    : 'Nenhum filme atingiu o quórum necessário ainda. Convide os membros a darem mais swipes para gerar combinações!'}
           </p>
         </div>
       )}

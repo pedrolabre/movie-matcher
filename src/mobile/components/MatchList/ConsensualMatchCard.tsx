@@ -1,9 +1,10 @@
 import React from 'react';
-import { Movie } from '../../../core/domain/entities/Movie.js';
+import { Movie, StreamingProvider } from '../../../core/domain/entities/Movie.js';
 import { GroupMovieMatch } from '../../../core/domain/entities/GroupMovieMatch.js';
 import { MatchStatus } from '../../../core/domain/enums/MatchStatus.js';
 import { QuorumLevel } from '../../../core/domain/enums/QuorumLevel.js';
 import { VoterAvatarStack, VoterProfile } from './VoterAvatarStack.js';
+import { StreamingBadgeList } from '../StreamingBadgeList.js';
 
 export interface EnrichedGroupMatch {
   readonly match: GroupMovieMatch;
@@ -31,6 +32,7 @@ export interface ConsensualMatchCardProps {
   readonly match: EnrichedGroupMatch;
   readonly onSchedule?: ((match: EnrichedGroupMatch) => void | Promise<void>) | undefined;
   readonly onWatchNow?: ((match: EnrichedGroupMatch) => void | Promise<void>) | undefined;
+  readonly onProviderPress?: ((provider: StreamingProvider) => void) | undefined;
   readonly onPress?: ((match: EnrichedGroupMatch) => void) | undefined;
   readonly style?: React.CSSProperties | undefined;
   readonly testId?: string | undefined;
@@ -115,6 +117,7 @@ export const ConsensualMatchCard: React.FC<ConsensualMatchCardProps> = ({
   match,
   onSchedule,
   onWatchNow,
+  onProviderPress,
   onPress,
   style,
   testId = 'consensual-match-card',
@@ -361,6 +364,38 @@ export const ConsensualMatchCard: React.FC<ConsensualMatchCardProps> = ({
           >
             {movie.overview}
           </p>
+        )}
+
+        {/* Seção de Provedores de Streaming no Brasil */}
+        {movie.streamingProviders && movie.streamingProviders.length > 0 && (
+          <div
+            data-testid="match-card-streaming-section"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              flexWrap: 'wrap',
+            }}
+          >
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 600,
+                color: '#94a3b8',
+                textTransform: 'uppercase',
+                letterSpacing: 0.5,
+              }}
+            >
+              Disponível em:
+            </span>
+            <StreamingBadgeList
+              providers={movie.streamingProviders}
+              maxVisible={4}
+              size={22}
+              onProviderPress={onProviderPress}
+              testId="match-card-streaming-badges"
+            />
+          </div>
         )}
 
         {/* Divisor */}

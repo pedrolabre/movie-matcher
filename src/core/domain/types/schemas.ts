@@ -20,6 +20,32 @@ export const streamingProviderSchema = z.object({
   providerId: z.number().int().positive(),
   providerName: z.string().trim().min(1),
   logoPath: z.string().trim().nullable().optional(),
+  slug: z.string().trim().optional(),
+  brandColor: z.string().trim().optional(),
+  displayPriority: z.number().int().optional(),
+});
+
+export const getMovieProvidersQuerySchema = z.object({
+  region: z.string().trim().length(2).default('BR'),
+});
+
+export const normalizedStreamingProviderSchema = z.object({
+  providerId: z.number().int().positive(),
+  providerName: z.string().trim().min(1),
+  slug: z.string().trim().min(1),
+  brandColor: z.string().trim().min(1),
+  logoPath: z.string().trim().nullable().optional(),
+  displayPriority: z.number().int().nonnegative().default(99),
+});
+
+export const movieWatchProvidersResultSchema = z.object({
+  movieId: z.number().int().positive(),
+  region: z.string().trim().length(2),
+  providers: z.array(normalizedStreamingProviderSchema),
+  flatrate: z.array(normalizedStreamingProviderSchema).default([]),
+  rent: z.array(normalizedStreamingProviderSchema).optional().default([]),
+  buy: z.array(normalizedStreamingProviderSchema).optional().default([]),
+  link: z.string().url().nullable().optional(),
 });
 
 export const userSchema = z.object({
@@ -291,6 +317,19 @@ export type GroupStats = z.infer<typeof groupStatsSchema>;
 export type ParticipantProfile = z.infer<typeof participantProfileSchema>;
 export type GroupHistoryItem = z.infer<typeof groupHistoryItemSchema>;
 export type GroupHistoryResult = z.infer<typeof groupHistoryResultSchema>;
+
+export type GetMovieProvidersQuery = z.infer<typeof getMovieProvidersQuerySchema>;
+export type NormalizedStreamingProvider = z.infer<typeof normalizedStreamingProviderSchema>;
+
+export interface MovieWatchProvidersResult {
+  readonly movieId: number;
+  readonly region: string;
+  readonly providers: readonly NormalizedStreamingProvider[];
+  readonly flatrate: readonly NormalizedStreamingProvider[];
+  readonly rent?: readonly NormalizedStreamingProvider[] | undefined;
+  readonly buy?: readonly NormalizedStreamingProvider[] | undefined;
+  readonly link?: string | null | undefined;
+}
 
 
 

@@ -6,7 +6,10 @@ export interface MovieGenre {
 export interface StreamingProvider {
   readonly providerId: number;
   readonly providerName: string;
-  readonly logoPath?: string | null;
+  readonly logoPath?: string | null | undefined;
+  readonly slug?: string | undefined;
+  readonly brandColor?: string | undefined;
+  readonly displayPriority?: number | undefined;
 }
 
 export interface Movie {

@@ -9,6 +9,7 @@ import {
   TmdbMovieResult,
   TmdbPaginatedResponse,
   TmdbRateLimitError,
+  TmdbWatchProvidersResponse,
 } from './types.js';
 
 export interface TmdbClientConfig {
@@ -182,5 +183,24 @@ export class TmdbClient {
 
     await this.cache.set(cacheKey, movie, this.detailsTtlSeconds);
     return movie;
+  }
+
+  async getWatchProviders(movieId: number): Promise<TmdbWatchProvidersResponse> {
+    if (!movieId || movieId <= 0 || !Number.isInteger(movieId)) {
+      throw new TmdbApiError(400, 'Invalid movieId');
+    }
+
+    const cacheKey = `tmdb:watch-providers:${movieId}`;
+    const cached = await this.cache.get<TmdbWatchProvidersResponse>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const data = await this.request<TmdbWatchProvidersResponse>(
+      `/movie/${movieId}/watch/providers`,
+    );
+
+    await this.cache.set(cacheKey, data, this.detailsTtlSeconds);
+    return data;
   }
 }

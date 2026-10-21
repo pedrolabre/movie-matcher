@@ -9,6 +9,7 @@ import { QuorumRule } from '../../src/core/domain/enums/QuorumRule.js';
 import { EnrichedGroupMatch } from '../../src/mobile/components/MatchList/ConsensualMatchCard.js';
 import {
   countMatchesByStatus,
+  extractStreamingProvidersFromMatches,
   filterGroupMatches,
   formatQuorumRuleText,
   GroupWatchlistScreen,
@@ -50,6 +51,7 @@ describe('GroupWatchlistScreen Component and Helpers', () => {
     rating = 8.0,
     matchedAt = new Date('2026-01-01'),
     genreId = 878,
+    streamingProviders: Movie['streamingProviders'] = [],
   ): EnrichedGroupMatch {
     const movie: Movie = {
       tmdbId: movieId,
@@ -62,7 +64,7 @@ describe('GroupWatchlistScreen Component and Helpers', () => {
       runtimeMinutes: 120,
       voteAverage: rating,
       genres: [{ id: genreId, name: 'Gênero' }],
-      streamingProviders: [],
+      streamingProviders,
       syncedAt: new Date(),
     };
 
@@ -95,6 +97,7 @@ describe('GroupWatchlistScreen Component and Helpers', () => {
       8.6,
       new Date('2026-02-01'),
       878,
+      [{ providerId: 8, providerName: 'Netflix', slug: 'netflix', brandColor: '#E50914', displayPriority: 1 }],
     ),
     createMockEnrichedMatch(
       'm2',
@@ -105,6 +108,7 @@ describe('GroupWatchlistScreen Component and Helpers', () => {
       8.5,
       new Date('2026-02-05'),
       878,
+      [{ providerId: 119, providerName: 'Prime Video', slug: 'prime-video', brandColor: '#00A8E1', displayPriority: 2 }],
     ),
     createMockEnrichedMatch(
       'm3',
@@ -115,6 +119,7 @@ describe('GroupWatchlistScreen Component and Helpers', () => {
       8.9,
       new Date('2026-01-15'),
       18,
+      [{ providerId: 8, providerName: 'Netflix', slug: 'netflix', brandColor: '#E50914', displayPriority: 1 }],
     ),
     createMockEnrichedMatch(
       'm4',
@@ -180,6 +185,36 @@ describe('GroupWatchlistScreen Component and Helpers', () => {
         genreId: 878,
       });
       expect(sciFiOnly).toHaveLength(3); // Interestelar, Duna, Matrix (Blade Runner é ARCHIVED)
+    });
+
+    it('deve filtrar por provedor de streaming', () => {
+      const netflixOnly = filterGroupMatches(mockMatches, {
+        statusTab: 'ALL',
+        providerId: 8,
+      });
+      expect(netflixOnly).toHaveLength(2); // Interestelar e Oppenheimer
+      expect(netflixOnly.map((m) => m.movie.title)).toEqual(['Interestelar', 'Oppenheimer']);
+
+      const primeOnly = filterGroupMatches(mockMatches, {
+        statusTab: 'ALL',
+        providerId: 119,
+      });
+      expect(primeOnly).toHaveLength(1);
+      expect(primeOnly[0]?.movie.title).toBe('Duna: Parte 2');
+    });
+  });
+
+  describe('extractStreamingProvidersFromMatches helper', () => {
+    it('deve extrair e deduplicar provedores disponíveis nos matches ordenados por prioridade', () => {
+      const providers = extractStreamingProvidersFromMatches(mockMatches);
+      expect(providers).toHaveLength(2);
+      expect(providers[0]?.providerName).toBe('Netflix');
+      expect(providers[1]?.providerName).toBe('Prime Video');
+    });
+
+    it('deve retornar lista vazia se nenhum match possuir provedores de streaming', () => {
+      const providers = extractStreamingProvidersFromMatches([]);
+      expect(providers).toEqual([]);
     });
   });
 
@@ -269,6 +304,20 @@ describe('GroupWatchlistScreen Component and Helpers', () => {
         errorMessage: 'Erro ao carregar matches',
       });
       expect(errorElement.props.errorMessage).toBe('Erro ao carregar matches');
+    });
+
+    it('deve suportar seleção de filtro de streaming e repassar callback onSelectProvider', () => {
+      const onSelectProvider = vi.fn();
+      const element = React.createElement(GroupWatchlistScreen, {
+        group: mockGroup,
+        matches: mockMatches,
+        selectedProviderId: 8,
+        onSelectProvider,
+      });
+
+      expect(element).toBeDefined();
+      expect(element.props.selectedProviderId).toBe(8);
+      expect(element.props.onSelectProvider).toBe(onSelectProvider);
     });
   });
 });

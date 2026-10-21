@@ -290,4 +290,35 @@ describe('TmdbClient', () => {
 
     await expect(client.getPopularMovies(1)).rejects.toThrow(TmdbApiError);
   });
+
+  it('deve buscar provedores de exibição com getWatchProviders e gravar em cache', async () => {
+    const mockWatchResponse = {
+      id: 550,
+      results: {
+        BR: {
+          link: 'https://tmdb.org/watch/550',
+          flatrate: [{ provider_id: 8, provider_name: 'Netflix' }],
+        },
+      },
+    };
+
+    const fetchSpy = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => mockWatchResponse,
+    });
+    vi.stubGlobal('fetch', fetchSpy);
+
+    const client = new TmdbClient({ apiKey: 'test-api-key' });
+    const data = await client.getWatchProviders(550);
+
+    expect(data.id).toBe(550);
+    expect(data.results?.BR?.flatrate?.[0]?.provider_name).toBe('Netflix');
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+
+    // Cache hit
+    const cached = await client.getWatchProviders(550);
+    expect(cached).toEqual(data);
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+  });
 });

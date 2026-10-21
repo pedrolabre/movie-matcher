@@ -1,6 +1,7 @@
 import { FastifyInstance, FastifyPluginAsync } from 'fastify';
 import { CatalogService } from '../../core/services/CatalogService.js';
 import {
+  getMovieProvidersQuerySchema,
   movieDetailsParamsSchema,
   moviePaginationQuerySchema,
   movieSearchQuerySchema,
@@ -31,6 +32,13 @@ export const moviesRoutes: FastifyPluginAsync<MoviesRoutesOptions> = async (
   fastify.get('/genres', async (_request, reply) => {
     const genres = await catalogService.getGenres();
     return reply.status(200).send({ genres });
+  });
+
+  fastify.get('/:id/providers', async (request, reply) => {
+    const params = movieDetailsParamsSchema.parse(request.params);
+    const query = getMovieProvidersQuerySchema.parse(request.query);
+    const providers = await catalogService.getMovieProviders(params.id, query.region ?? 'BR');
+    return reply.status(200).send(providers);
   });
 
   fastify.get('/:id', async (request, reply) => {

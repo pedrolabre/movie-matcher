@@ -1,12 +1,17 @@
 import { Movie, MovieGenre } from '../domain/entities/Movie.js';
+import { MovieWatchProvidersResult } from '../domain/types/schemas.js';
 import { MovieMapper } from '../../infrastructure/tmdb/mappers/MovieMapper.js';
 import { PaginatedMoviesResult, TmdbClient } from '../../infrastructure/tmdb/TmdbClient.js';
+import { WatchProvidersService } from '../../infrastructure/tmdb/WatchProvidersService.js';
 
 export class CatalogService {
   private readonly tmdbClient: TmdbClient;
+  private readonly watchProvidersService: WatchProvidersService;
 
-  constructor(tmdbClient?: TmdbClient) {
+  constructor(tmdbClient?: TmdbClient, watchProvidersService?: WatchProvidersService) {
     this.tmdbClient = tmdbClient ?? new TmdbClient();
+    this.watchProvidersService =
+      watchProvidersService ?? new WatchProvidersService({ tmdbClient: this.tmdbClient });
   }
 
   async getTrending(page = 1): Promise<PaginatedMoviesResult> {
@@ -23,6 +28,14 @@ export class CatalogService {
 
   async getMovieDetails(movieId: number): Promise<Movie> {
     return this.tmdbClient.getMovieDetails(movieId);
+  }
+
+  async getMovieProviders(movieId: number, region = 'BR'): Promise<MovieWatchProvidersResult> {
+    return this.watchProvidersService.getMovieProviders(movieId, region);
+  }
+
+  getWatchProvidersService(): WatchProvidersService {
+    return this.watchProvidersService;
   }
 
   async getByGenre(genreId: number, page = 1): Promise<PaginatedMoviesResult> {

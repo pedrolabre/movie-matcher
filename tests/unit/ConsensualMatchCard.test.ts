@@ -127,5 +127,40 @@ describe('ConsensualMatchCard Component and Helpers', () => {
       expect(element.props.match.voters).toHaveLength(4);
       expect(element.props.match.memberCount).toBe(5);
     });
+
+    it('deve aceitar provedores de streaming no filme e callback onProviderPress', () => {
+      const onProviderPress = vi.fn();
+      const matchWithStreaming: EnrichedGroupMatch = {
+        ...mockEnrichedMatch,
+        movie: {
+          ...mockMovie,
+          streamingProviders: [
+            {
+              providerId: 8,
+              providerName: 'Netflix',
+              slug: 'netflix',
+              brandColor: '#E50914',
+              logoPath: '/netflix.jpg',
+            },
+            {
+              providerId: 119,
+              providerName: 'Prime Video',
+              slug: 'prime-video',
+              brandColor: '#00A8E1',
+              logoPath: '/prime.jpg',
+            },
+          ],
+        },
+      };
+
+      const element = React.createElement(ConsensualMatchCard, {
+        match: matchWithStreaming,
+        onProviderPress,
+      });
+
+      expect(element).toBeDefined();
+      expect(element.props.match.movie.streamingProviders).toHaveLength(2);
+      expect(element.props.onProviderPress).toBe(onProviderPress);
+    });
   });
 });

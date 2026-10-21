@@ -21,6 +21,9 @@ import {
   groupMovieMatchSchema,
   groupWatchSessionSchema,
   scheduleSessionDtoSchema,
+  getMovieProvidersQuerySchema,
+  normalizedStreamingProviderSchema,
+  movieWatchProvidersResultSchema,
 } from '../../src/core/domain/types/schemas.js';
 
 describe('Domain Enums and Schemas', () => {
@@ -307,6 +310,65 @@ describe('Domain Enums and Schemas', () => {
       const parsed = scheduleSessionDtoSchema.parse(dto);
       expect(parsed.notes).toBe('Sessão confirmada');
       expect(parsed.scheduledAt).toBeInstanceOf(Date);
+    });
+  });
+
+  describe('Streaming Provider Schemas', () => {
+    it('should validate and parse GetMovieProvidersQuery with default region BR', () => {
+      const parsedDefault = getMovieProvidersQuerySchema.parse({});
+      expect(parsedDefault.region).toBe('BR');
+
+      const parsedCustom = getMovieProvidersQuerySchema.parse({ region: 'US' });
+      expect(parsedCustom.region).toBe('US');
+    });
+
+    it('should reject invalid region codes', () => {
+      expect(() => getMovieProvidersQuerySchema.parse({ region: 'BRA' })).toThrow();
+      expect(() => getMovieProvidersQuerySchema.parse({ region: 'B' })).toThrow();
+    });
+
+    it('should validate NormalizedStreamingProvider schema', () => {
+      const valid = {
+        providerId: 8,
+        providerName: 'Netflix',
+        slug: 'netflix',
+        brandColor: '#E50914',
+        logoPath: 'https://image.tmdb.org/t/p/w500/netflix.jpg',
+        displayPriority: 1,
+      };
+
+      const parsed = normalizedStreamingProviderSchema.parse(valid);
+      expect(parsed.slug).toBe('netflix');
+      expect(parsed.displayPriority).toBe(1);
+    });
+
+    it('should validate MovieWatchProvidersResult schema', () => {
+      const result = {
+        movieId: 550,
+        region: 'BR',
+        providers: [
+          {
+            providerId: 8,
+            providerName: 'Netflix',
+            slug: 'netflix',
+            brandColor: '#E50914',
+          },
+        ],
+        flatrate: [
+          {
+            providerId: 8,
+            providerName: 'Netflix',
+            slug: 'netflix',
+            brandColor: '#E50914',
+          },
+        ],
+        link: 'https://tmdb.org/watch/550',
+      };
+
+      const parsed = movieWatchProvidersResultSchema.parse(result);
+      expect(parsed.movieId).toBe(550);
+      expect(parsed.flatrate).toHaveLength(1);
+      expect(parsed.link).toBe('https://tmdb.org/watch/550');
     });
   });
 });

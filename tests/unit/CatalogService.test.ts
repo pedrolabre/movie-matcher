@@ -105,4 +105,32 @@ describe('CatalogService', () => {
     expect(scifiResult.movies[0]?.tmdbId).toBe(101);
     expect(scifiResult.totalResults).toBe(1);
   });
+
+  it('deve obter provedores de streaming delegando ao WatchProvidersService', async () => {
+    const service = new CatalogService();
+    const watchProvidersService = service.getWatchProvidersService();
+    const spy = vi.spyOn(watchProvidersService, 'getMovieProviders').mockResolvedValue({
+      movieId: 101,
+      region: 'BR',
+      providers: [],
+      flatrate: [
+        {
+          providerId: 8,
+          providerName: 'Netflix',
+          slug: 'netflix',
+          brandColor: '#E50914',
+          displayPriority: 1,
+          logoPath: '/netflix.jpg',
+        },
+      ],
+      rent: [],
+      buy: [],
+      link: null,
+    });
+
+    const result = await service.getMovieProviders(101, 'BR');
+    expect(spy).toHaveBeenCalledWith(101, 'BR');
+    expect(result.flatrate).toHaveLength(1);
+    expect(result.flatrate[0]?.providerName).toBe('Netflix');
+  });
 });
