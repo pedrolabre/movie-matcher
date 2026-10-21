@@ -107,6 +107,7 @@ movie-matcher/
 │   │   ├── groupsRoutes.test.ts
 │   │   ├── matchIntersection.test.ts
 │   │   ├── moviesRoutes.test.ts
+│   │   ├── MultiUserMatchingE2E.test.ts
 │   │   ├── preferencesRoutes.test.ts
 │   │   ├── rouletteRoutes.test.ts
 │   │   ├── sessionsRoutes.test.ts

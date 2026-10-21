@@ -6,6 +6,7 @@
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
+    "test:e2e": "vitest run tests/integration/MultiUserMatchingE2E.test.ts",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit"
   },
